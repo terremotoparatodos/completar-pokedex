@@ -780,7 +780,7 @@ async function joinRoom(code,myName){
 
 // ─ online game ─
 function applyRemoteFind(pkm_num, player){
-  if(G.found[pkm_num]) return;
+  if(G.found[pkm_num]) return; // already applied locally or by Realtime
   G.found[pkm_num]=player;
   G.scores[player]++;
   markSlot(pkm_num, player, true);
@@ -828,19 +828,22 @@ function startOnline(code,me){
     `realtime:public:sporcle_rooms:code=eq.${code}`,
     (evt, record) => {
       if(!record) return;
-      if(ME===2 && record.time_left!==undefined){ G.timeLeft=record.time_left; renderTimer(); }
+      // Sync timer from host to correct drift
+      if(ME===2 && record.time_left!==undefined && Math.abs(G.timeLeft-record.time_left)>2){ G.timeLeft=record.time_left; renderTimer(); }
       if(record.cur_player!==undefined && record.cur_player!==G.cur){ G.cur=record.cur_player; updateTurnOnline(); }
       if(record.status==='ended' && G.running){ G.running=false; endGame(); }
     }
   );
-  // host runs timer
-  if(me===1){
-    tInt=setInterval(async()=>{
-      G.timeLeft--;renderTimer();
+  // Both sides run their own timer; host syncs to DB every 5s as source of truth
+  tInt=setInterval(async()=>{
+    G.timeLeft--;renderTimer();
+    if(me===1){
       if(G.timeLeft%5===0){try{await sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{time_left:G.timeLeft}});}catch(e){}}
       if(G.timeLeft<=0){clearInterval(tInt);try{await sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{status:'ended',time_left:0}});}catch(e){}endGame();}
-    },1000);
-  }
+    } else {
+      if(G.timeLeft<=0){clearInterval(tInt);endGame();}
+    }
+  },1000);
   setTimeout(()=>{if(G.cur===ME)document.getElementById('poke-input').focus();},80);
 }
 
@@ -887,9 +890,9 @@ async function doFind(pk){
   flashIn('fok');
   document.getElementById('poke-input').value='';
   showFB('✓ '+pk.nom+' (#'+pk.n+')','fbok');
-  if(MODE==='local'){
-    applyRemoteFind(pk.n, pl);
-  } else {
+  // Apply locally immediately — don't wait for Realtime echo
+  applyRemoteFind(pk.n, pl);
+  if(MODE!=='local'){
     try{await sb('sporcle_found',{method:'POST',prefer:'return=minimal',body:{room_code:ROOM,pkm_num:pk.n,player:pl,pkm_name:pk.nom}});}catch(e){console.warn('sync error',e);}
   }
 }
