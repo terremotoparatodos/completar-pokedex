@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nombrá el Pokémon</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--bg2:#0d0d1f;--bg3:#111127;
+  --bdr:#1e1b4b;--bdr2:#2d2a5e;
+  --gold:#FFD700;--goldk:#B8860B;
+  --p1:#60a5fa;--p1bg:#1e3a5f;--p1bd:#3b82f6;
+  --p2:#f472b6;--p2bg:#4a1942;--p2bd:#ec4899;
+  --solo:#22c55e;--solobg:#1a3a1a;--solobd:#16a34a;
+  --mut:#6b7280;--danger:#ef4444;--warn:#f59e0b;--grn:#22c55e;
+  --pur:#a78bfa;--purbg:#1e1b4b;--purbd:#4338ca;
+}
+html,body{min-height:100vh;background:var(--bg);color:#fff;font-family:'Press Start 2P',monospace;font-size:10px}
+.screen{display:none}.screen.active{display:flex}
+
+/* ══ SETUP ══ */
+#setup{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:22px;padding:36px 20px;background:radial-gradient(ellipse at 50% 0%,#1a0a3e,var(--bg) 70%)}
+.logo-title{font-size:18px;color:var(--gold);text-shadow:3px 3px 0 var(--goldk);letter-spacing:3px;line-height:1.8;text-align:center}
+.logo-sub{font-size:8px;color:var(--pur);letter-spacing:2px;text-align:center;margin-top:4px}
+svg.pokeball{width:60px;height:60px;display:block;margin:0 auto 14px;animation:spinp 4s infinite}
+@keyframes spinp{0%,70%{transform:rotate(0deg)}85%{transform:rotate(180deg)}100%{transform:rotate(180deg)}}
+
+.region-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;max-width:460px}
+.reg-btn{background:var(--purbg);border:2px solid var(--purbd);border-radius:10px;padding:12px;cursor:pointer;text-align:center;color:var(--pur);font-family:'Press Start 2P',monospace;transition:.15s}
+.reg-btn:hover{background:#2d2a5e}
+.reg-btn.sel{border-color:var(--gold);background:#1a1500;color:var(--gold)}
+.reg-name{font-size:10px;display:block;margin-bottom:5px}
+.reg-range{font-size:7px;color:var(--mut);display:block}
+.reg-btn.sel .reg-range{color:#a38200}
+
+.players-wrap{width:100%;max-width:460px}
+.sec-title{font-size:8px;color:var(--mut);letter-spacing:3px;margin-bottom:12px;text-align:center}
+.player-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.player-col{display:flex;flex-direction:column;gap:6px}
+.ptag{font-size:8px;letter-spacing:1px}
+.ptag1{color:var(--p1)}.ptag2{color:var(--p2)}
+.pinput{background:var(--bg2);border:1px solid #374151;border-radius:6px;padding:9px 11px;color:#fff;font-size:11px;font-family:'Press Start 2P',monospace;outline:none;width:100%;transition:border-color .2s}
+.pinput:focus{border-color:var(--purbd)}
+#pi1:focus{border-color:var(--p1bd)}#pi2:focus{border-color:var(--p2bd)}
+
+.mode-tabs{display:flex;gap:8px;width:100%;max-width:460px}
+.mtab{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:8px;padding:9px 6px;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:7px;color:var(--mut);text-align:center;transition:.15s;line-height:2}
+.mtab:hover{background:var(--bg3)}
+.mtab.sel{border-color:var(--gold);color:var(--gold);background:#1a1500}
+.mode-panel{display:none;width:100%;max-width:460px;flex-direction:column;gap:8px}
+.mode-panel.active{display:flex}
+.code-input{background:var(--bg3);border:1px solid var(--bdr2);border-radius:6px;padding:10px;color:#fff;font-size:22px;font-family:'Press Start 2P',monospace;outline:none;width:100%;text-align:center;letter-spacing:6px;text-transform:uppercase;transition:border-color .2s}
+.code-input:focus{border-color:var(--gold)}
+
+.start-btn{background:var(--gold);color:var(--bg);border:none;border-radius:8px;padding:14px 36px;font-size:12px;font-family:'Press Start 2P',monospace;cursor:pointer;letter-spacing:2px;box-shadow:0 5px 0 var(--goldk);transition:transform .1s,box-shadow .1s}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 7px 0 var(--goldk)}
+.start-btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--goldk)}
+.start-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:0 5px 0 var(--goldk)}
+
+/* ══ LOBBY ══ */
+#lobby{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:18px;padding:40px 20px;background:radial-gradient(ellipse at 50% 0%,#1a0a3e,var(--bg) 70%)}
+.lobby-code{font-size:44px;color:#fff;letter-spacing:12px;text-align:center}
+.lp-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.lp-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:14px 22px;text-align:center;min-width:130px}
+.lp-card.ok{border-color:var(--grn)}
+.lp-name{font-size:9px;margin-bottom:5px}
+.lp-st{font-size:7px;color:var(--mut)}.lp-st.ok{color:var(--grn)}
+.dots::after{content:'...';animation:d 1.2s infinite}
+@keyframes d{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+
+/* ══ WAITING ══ */
+#waiting{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:14px;background:radial-gradient(ellipse at 50% 0%,#1a0a3e,var(--bg) 70%)}
+#waiting .wt{font-size:12px;color:var(--pur);text-align:center;line-height:2}
+#waiting .ws{font-size:8px;color:var(--mut)}
+
+/* ══ GAME — TOWER LAYOUT ══ */
+#game{
+  display:flex;
+  flex-direction:column;
+  height:calc(100vh - 40px);
+  max-width:1600px;
+  margin:20px auto;
+  width:100%;
+  overflow:hidden;
+  border-radius:6px;
+}
+
+/* sticky top block: everything above the grid */
+.game-top{
+  flex-shrink:0;
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:var(--bg);
+}
+
+/* cameras row — slight gap between the two */
+.cam-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;padding:6px 6px 0;background:var(--bg)}
+.cam-box{position:relative;background:#111;aspect-ratio:16/9;overflow:hidden;display:flex;align-items:center;justify-content:center;border-radius:4px;max-height:calc((100vw - 12px) / 2 / 16 * 9 * 0.68)}
+.cam-label{position:absolute;top:8px;left:10px;font-size:11px;color:var(--gold);text-shadow:2px 2px 0 #000,0 0 8px #000;letter-spacing:2px;z-index:2}
+.cam-label-r{position:absolute;top:8px;right:10px;font-size:11px;color:var(--gold);text-shadow:2px 2px 0 #000,0 0 8px #000;letter-spacing:2px;z-index:2}
+.cam-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:#0a0a18;border:1px solid var(--bdr);border-radius:4px}
+.cam-icon{font-size:22px;color:#2d2a5e}
+.cam-text{font-size:6px;color:#2d2a5e;letter-spacing:1px;text-align:center;line-height:2}
+
+/* scores + timer — slim strip below cameras */
+.g-header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:5px 10px;background:var(--bg2);border-bottom:1px solid var(--bdr);border-top:1px solid var(--bdr);gap:6px;margin-top:6px}
+.sc-col{display:flex;flex-direction:column;gap:1px}
+.sc-col.r{align-items:flex-end}
+.sc-pname{font-size:7px;letter-spacing:1px}
+.sp1{color:var(--p1)}.sp2{color:var(--p2)}
+.sc-num{font-size:16px;color:var(--gold);font-weight:bold;line-height:1.2}
+.sc-lbl{display:none}
+.timer-col{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px}
+.timer{font-size:20px;color:#fff;letter-spacing:3px;line-height:1.2}
+.timer.warn{color:var(--warn)}.timer.danger{color:var(--danger);animation:blink .5s infinite alternate}
+@keyframes blink{from{opacity:1}to{opacity:.4}}
+.progress{font-size:9px;letter-spacing:1px;font-weight:bold;white-space:nowrap}
+
+/* turn + input — 10px height feel, compact */
+.ctrl-row{display:flex;align-items:center;padding:5px 10px;background:var(--bg2);border-bottom:1px solid var(--bdr);gap:10px}
+.turn-info{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.tdot{width:7px;height:7px;border-radius:50%;animation:pdot 1s infinite alternate;flex-shrink:0}
+@keyframes pdot{from{opacity:1;transform:scale(1)}to{opacity:.5;transform:scale(.7)}}
+.dot1{background:var(--p1)}.dot2{background:var(--p2)}.dots-solo{background:var(--gold)}
+.tinfo-text{display:flex;flex-direction:row;align-items:center;gap:6px}
+.tlbl{font-size:7px;color:var(--mut);white-space:nowrap}
+.tname{font-size:9px;white-space:nowrap}
+.tn1{color:var(--p1)}.tn2{color:var(--p2)}.tnsolo{color:var(--gold)}
+.poke-input{flex:1;background:var(--bg3);border:1px solid #374151;border-radius:5px 0 0 5px;padding:6px 10px;color:#fff;font-size:10px;font-family:'Press Start 2P',monospace;outline:none;transition:border-color .2s;min-width:0;height:34px}
+.poke-input::placeholder{color:#374151;font-size:7px}
+.poke-input:focus{border-color:#6366f1}
+.poke-input.fok{border-color:var(--grn);background:#052e16}
+.poke-input.ferr{border-color:var(--danger);background:#2d0c0c;animation:shake .3s}
+.poke-input:disabled{opacity:.4;cursor:not-allowed}
+@keyframes shake{0%,100%{transform:translateX(0)}30%{transform:translateX(-5px)}70%{transform:translateX(5px)}}
+.sub-btn{background:var(--purbg);border:1px solid var(--purbd);border-left:none;border-radius:0 5px 5px 0;padding:0 20px;color:var(--pur);font-size:8px;font-family:'Press Start 2P',monospace;cursor:pointer;white-space:nowrap;transition:background .2s;flex-shrink:0;height:34px;min-width:56px;line-height:34px}
+.sub-btn:hover{background:#2d2a5e}
+.sub-btn:disabled{opacity:.3;cursor:not-allowed}
+.btn-sw{background:var(--purbg);border:1px solid var(--purbd);border-radius:5px;padding:0 14px;color:var(--pur);font-size:8px;font-family:'Press Start 2P',monospace;cursor:pointer;white-space:nowrap;transition:background .2s;flex-shrink:0;height:34px}
+.btn-sw:hover{background:#2d2a5e}
+.btn-gu{background:transparent;border:1px solid #374151;border-radius:5px;padding:0 14px;color:var(--mut);font-size:8px;font-family:'Press Start 2P',monospace;cursor:pointer;transition:color .2s,border-color .2s;white-space:nowrap;flex-shrink:0;height:34px}
+.btn-gu:hover{color:var(--danger);border-color:var(--danger)}
+
+/* feedback — ultra slim */
+.feedback{height:20px;padding:2px 8px;font-size:7px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--bdr);letter-spacing:.5px;flex-shrink:0}
+.fbok{background:#052e16;color:var(--grn)}.fberr{background:#2d0c0c;color:var(--danger)}
+.fbdup{background:#1c1300;color:var(--warn)}.fbinfo{background:var(--bg2);color:var(--mut)}
+.fbempty{background:var(--bg)}.fbother{background:#0c1030;color:#93c5fd}
+/* online turn banner */
+.turn-banner{text-align:center;padding:4px;font-size:7px;letter-spacing:2px;flex-shrink:0}
+.turn-banner.on{background:var(--grn);color:#052e16}
+.turn-banner.off{background:#1a1a1a;color:var(--mut);display:none}
+
+/* ── POKEMON GRID — 10 per row, scrollable — height = exactly 3 rows ── */
+.poke-grid{
+  display:grid;
+  grid-template-columns:repeat(10,1fr);
+  gap:3px;
+  padding:6px 6px 0;
+  align-content:start;
+  overflow-y:auto;
+  flex:0 0 auto;
+  max-height:var(--grid-3rows, 300px);
+}
+
+.poke-grid::after{
+  content:'';
+  display:block;
+  grid-column:1/-1;
+  height:50px;
+}
+
+/* slot: padding-bottom trick forces square without needing a fixed height on parent */
+.pslot{
+  position:relative;
+  width:100%;
+  padding-bottom:100%; /* = width → square */
+  border-radius:5px;
+  overflow:hidden;
+  cursor:default;
+  transition:background .25s, border-color .25s;
+}
+.pslot.empty{background:var(--bg3);border:1px solid var(--bdr)}
+.pslot.found-p1{background:var(--p1bg);border:1px solid var(--p1bd)}
+.pslot.found-p2{background:var(--p2bg);border:1px solid var(--p2bd)}
+.pslot.found-solo{background:var(--solobg);border:1px solid var(--solobd)}
+.pslot.reveal{background:#181818;border:1px solid #2a2a2a}
+.pslot.pop{animation:pop .4s ease-out}
+@keyframes pop{0%{transform:scale(.8);filter:brightness(2.5)}55%{transform:scale(1.1)}100%{transform:scale(1);filter:brightness(1)}}
+
+/* inner: absolute layer filling the square slot */
+.slot-inner{
+  position:absolute;
+  inset:0;
+  display:grid;
+  grid-template-rows:14px 1fr 20px;
+  overflow:hidden;
+}
+
+/* row 1: number top-left */
+.slot-num{
+  font-size:7px;
+  line-height:14px;
+  height:14px;
+  padding:0 4px;
+  color:var(--bdr2);
+  text-shadow:1px 1px 0 #000;
+  box-sizing:border-box;
+}
+.found-p1 .slot-num{color:#93c5fd}
+.found-p2 .slot-num{color:#f9a8d4}
+.found-solo .slot-num{color:#86efac}
+.reveal .slot-num{color:#4b5563}
+
+/* row 2: sprite or ? — centered */
+.slot-mid{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.slot-q{font-size:14px;color:var(--bdr2);font-weight:bold;line-height:1}
+.pslot.found-p1 .slot-q,
+.pslot.found-p2 .slot-q,
+.pslot.found-solo .slot-q,
+.pslot.reveal .slot-q{display:none}
+
+.slot-sprite{
+  width:70%;
+  height:70%;
+  object-fit:contain;
+  image-rendering:pixelated;
+  display:none;
+}
+.pslot.found-p1 .slot-sprite,
+.pslot.found-p2 .slot-sprite,
+.pslot.found-solo .slot-sprite{display:block}
+.pslot.reveal .slot-sprite{display:block;filter:grayscale(1) opacity(.25)}
+
+/* row 3: name bottom — fixed 20px row, font shrinks for long names */
+.slot-name{
+  font-size:9px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  width:100%;
+  text-align:center;
+  padding:0 4px 2px;
+  display:none;
+  line-height:20px;
+  height:20px;
+  text-shadow:1px 1px 0 #000, 0 0 6px rgba(0,0,0,0.8);
+  box-sizing:border-box;
+}
+.found-p1 .slot-name{display:block;color:#93c5fd}
+.found-p2 .slot-name{display:block;color:#f9a8d4}
+.found-solo .slot-name{display:block;color:#86efac}
+.reveal .slot-name{display:block;color:#4b5563}
+
+/* ══ END ══ */
+#end{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:18px;padding:40px 20px;background:radial-gradient(ellipse at 50% 0%,#1a0a3e,var(--bg) 70%);text-align:center}
+.end-title{font-size:18px;color:var(--gold);letter-spacing:3px}
+.end-total{font-size:8px;color:var(--mut);margin-top:4px;letter-spacing:1px}
+.final-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.fc{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:20px 26px;min-width:130px}
+.fc.win{border:2px solid var(--gold)}
+.fc-name{font-size:9px;margin-bottom:8px}
+.fcp1 .fc-name{color:var(--p1)}.fcp2 .fc-name{color:var(--p2)}.fcsolo .fc-name{color:var(--gold)}
+.fc-num{font-size:32px;color:var(--gold)}
+.fc-pct{font-size:7px;color:var(--mut);margin-top:4px}
+.win-tag{font-size:8px;color:var(--gold);margin-top:6px}
+.missed-wrap{width:100%;max-width:540px}
+.missed-title{font-size:7px;color:var(--mut);letter-spacing:2px;margin-bottom:8px}
+.missed-pills{display:flex;flex-wrap:wrap;gap:5px;max-height:110px;overflow-y:auto;justify-content:center}
+.missed-pill{background:var(--bg2);border:1px solid #374151;border-radius:4px;padding:3px 7px;font-size:7px;color:#4b5563}
+.replay-btn{background:transparent;border:2px solid var(--gold);color:var(--gold);border-radius:8px;padding:12px 28px;font-size:10px;font-family:'Press Start 2P',monospace;cursor:pointer;letter-spacing:2px;transition:background .2s}
+.replay-btn:hover{background:#1a1500}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup" class="screen active">
+  <svg class="pokeball" viewBox="0 0 64 64" fill="none">
+    <circle cx="32" cy="32" r="30" fill="#dc2626" stroke="#fff" stroke-width="2.5"/>
+    <path d="M2 32H62" stroke="#fff" stroke-width="4"/>
+    <path d="M2 32Q2 62 32 62Q62 62 62 32Z" fill="#f8fafc" stroke="#fff" stroke-width="2"/>
+    <circle cx="32" cy="32" r="10" fill="#fff" stroke="#e5e7eb" stroke-width="2"/>
+    <circle cx="32" cy="32" r="6" fill="#1a1a2e"/><circle cx="32" cy="32" r="4" fill="#fff"/>
+  </svg>
+  <div class="logo-title">NOMBRÁ EL<br>POKÉMON</div>
+  <div class="logo-sub">20 MINUTOS · GEN 1–4</div>
+
+  <div style="width:100%;max-width:460px">
+    <div class="sec-title">REGIÓN</div>
+    <div class="region-grid">
+      <button class="reg-btn" data-gen="1"><span class="reg-name">◆ KANTO</span><span class="reg-range">Gen 1 · #001–151 · 151 pkm</span></button>
+      <button class="reg-btn" data-gen="2"><span class="reg-name">◆ JOHTO</span><span class="reg-range">Gen 2 · #152–251 · 100 pkm</span></button>
+      <button class="reg-btn" data-gen="3"><span class="reg-name">◆ HOENN</span><span class="reg-range">Gen 3 · #252–386 · 135 pkm</span></button>
+      <button class="reg-btn" data-gen="4"><span class="reg-name">◆ SINNOH</span><span class="reg-range">Gen 4 · #387–493 · 107 pkm</span></button>
+    </div>
+  </div>
+
+  <div class="players-wrap">
+    <div class="sec-title">JUGADORES</div>
+    <div class="player-grid">
+      <div class="player-col">
+        <div class="ptag ptag1">JUGADOR 1</div>
+        <input class="pinput" id="pi1" type="text" placeholder="Guti" maxlength="14" value="Guti">
+      </div>
+      <div class="player-col">
+        <div class="ptag ptag2">JUGADOR 2</div>
+        <input class="pinput" id="pi2" type="text" placeholder="Sky" maxlength="14" value="Sky">
+        <div style="font-size:7px;color:#4b5563;margin-top:2px">vacío = modo solo</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:100%;max-width:460px">
+    <div class="sec-title">MODO</div>
+    <div class="mode-tabs">
+      <button class="mtab sel" id="tab-local">🖥️ LOCAL<br>misma compu</button>
+      <button class="mtab" id="tab-host">🌐 CREAR SALA<br>cada uno su compu</button>
+      <button class="mtab" id="tab-join">🔗 UNIRSE<br>ingresá código</button>
+    </div>
+    <div class="mode-panel active" id="panel-local"><div style="font-size:7px;color:var(--mut);text-align:center;line-height:2;margin-top:4px">Turno compartido. Usá el botón 🔄 para alternarse.</div></div>
+    <div class="mode-panel" id="panel-host"><div style="font-size:7px;color:var(--mut);text-align:center;line-height:2;margin-top:4px">Creás la sala y le pasás el código a Sky. Vos sos host.</div></div>
+    <div class="mode-panel" id="panel-join">
+      <input class="code-input" id="room-code-in" type="text" placeholder="XXXX" maxlength="4" style="margin-top:8px">
+      <div style="font-size:7px;color:var(--mut);text-align:center">código de 4 letras del host</div>
+    </div>
+  </div>
+
+  <button class="start-btn" id="start-btn" disabled>▶ EMPEZAR</button>
+</div>
+
+<!-- LOBBY -->
+<div id="lobby" class="screen" style="flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:18px;padding:40px 20px;background:radial-gradient(ellipse at 50% 0%,#1a0a3e,var(--bg) 70%)">
+  <div style="font-size:14px;color:var(--gold);letter-spacing:2px">SALA CREADA</div>
+  <div style="font-size:8px;color:var(--mut);letter-spacing:2px">CÓDIGO</div>
+  <div class="lobby-code" id="lobby-code">----</div>
+  <div style="font-size:7px;color:var(--mut);text-align:center;line-height:2">Pasale este código a Sky<br>para que se una desde su compu</div>
+  <div class="lp-cards">
+    <div class="lp-card ok"><div class="lp-name" id="lp1name" style="color:var(--p1)">Guti</div><div class="lp-st ok">✓ host conectado</div></div>
+    <div class="lp-card" id="lp2card"><div class="lp-name" id="lp2name" style="color:var(--p2)">Sky</div><div class="lp-st" id="lp2st"><span class="dots">esperando</span></div></div>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div id="waiting" class="screen">
+  <div class="wt" style="font-size:12px;color:var(--pur);text-align:center;line-height:2">¡CONECTADO!<br>Esperando al host...</div>
+  <div class="ws" id="wait-info" style="font-size:8px;color:var(--mut);margin-top:8px"></div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+
+  <!-- STICKY TOP BLOCK -->
+  <div class="game-top">
+
+    <!-- online turn banner -->
+    <div class="turn-banner off" id="turn-banner"></div>
+
+    <!-- CAMERAS ROW -->
+    <div class="cam-row">
+      <div class="cam-box">
+        <div class="cam-label" id="cam1-label">guti</div>
+        <div class="cam-placeholder">
+          <div class="cam-icon">📷</div>
+          <div class="cam-text">CÁMARA JUGADOR 1<br>fuente de video en OBS</div>
+        </div>
+      </div>
+      <div class="cam-box">
+        <div class="cam-label-r" id="cam2-label">sky</div>
+        <div class="cam-placeholder">
+          <div class="cam-icon">📷</div>
+          <div class="cam-text">CÁMARA JUGADOR 2<br>fuente de video en OBS</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- scores + timer -->
+    <div class="g-header">
+      <div class="sc-col">
+        <div class="sc-pname sp1" id="hdr-p1">P1</div>
+        <div class="sc-num" id="sc1">0</div>
+        <div class="sc-lbl">pokémon</div>
+      </div>
+      <div class="timer-col">
+        <div class="timer" id="timer">20:00</div>
+        <div class="progress" id="progress">0 / 0</div>
+      </div>
+      <div class="sc-col r">
+        <div class="sc-pname sp2" id="hdr-p2">P2</div>
+        <div class="sc-num" id="sc2">0</div>
+        <div class="sc-lbl">pokémon</div>
+      </div>
+    </div>
+
+    <!-- turn + input -->
+    <div class="ctrl-row">
+      <div class="turn-info">
+        <div class="tdot dot1" id="tdot"></div>
+        <div class="tinfo-text">
+          <div class="tlbl">TURNO</div>
+          <div class="tname tn1" id="tname">—</div>
+        </div>
+      </div>
+      <input class="poke-input" id="poke-input" type="text" placeholder="Escribí un Pokémon..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button class="sub-btn" id="sub-btn">OK</button>
+      <button class="btn-sw" id="btn-sw">🔄</button>
+      <button class="btn-gu">VER</button>
+    </div>
+
+    <div class="feedback fbempty" id="feedback"></div>
+
+  </div><!-- /game-top -->
+
+  <div class="poke-grid" id="poke-grid"></div>
+</div>
+
+<!-- END -->
+<div id="end" class="screen">
+  <div class="end-title" id="end-title">¡TIEMPO!</div>
+  <div class="end-total" id="end-total"></div>
+  <div class="final-cards" id="final-cards"></div>
+  <div class="missed-wrap">
+    <div class="missed-title">POKÉMON QUE FALTARON</div>
+    <div class="missed-pills" id="missed-pills"></div>
+  </div>
+  <button class="replay-btn">↺ JUGAR DE NUEVO</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+const SB='https://rrymwvwujiltjrlaphzk.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyeW13dnd1amlsdGpybGFwaHprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxOTIzMTcsImV4cCI6MjEwMjc2ODMxN30.q-dM_1XxQYqX7IUhX98LfFcaJDEH0ZLbOl-slnmPzx0';
+
+async function sb(path,o={}){
+  const r=await fetch(SB+'/rest/v1/'+path,{
+    headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':o.prefer||'return=representation',...(o.headers||{})},
+    method:o.method||'GET',body:o.body?JSON.stringify(o.body):undefined
+  });
+  if(!r.ok){const t=await r.text();throw new Error(t);}
+  return r.status===204?null:r.json();
+}
+
+const REGIONS={1:{name:'Kanto',total:151},2:{name:'Johto',total:100},3:{name:'Hoenn',total:135},4:{name:'Sinnoh',total:107}};
+
+const ALL=[
+  {n:1,nom:"Bulbasaur",g:1},{n:2,nom:"Ivysaur",g:1},{n:3,nom:"Venusaur",g:1},
+  {n:4,nom:"Charmander",g:1},{n:5,nom:"Charmeleon",g:1},{n:6,nom:"Charizard",g:1},
+  {n:7,nom:"Squirtle",g:1},{n:8,nom:"Wartortle",g:1},{n:9,nom:"Blastoise",g:1},
+  {n:10,nom:"Caterpie",g:1},{n:11,nom:"Metapod",g:1},{n:12,nom:"Butterfree",g:1},
+  {n:13,nom:"Weedle",g:1},{n:14,nom:"Kakuna",g:1},{n:15,nom:"Beedrill",g:1},
+  {n:16,nom:"Pidgey",g:1},{n:17,nom:"Pidgeotto",g:1},{n:18,nom:"Pidgeot",g:1},
+  {n:19,nom:"Rattata",g:1},{n:20,nom:"Raticate",g:1},{n:21,nom:"Spearow",g:1},{n:22,nom:"Fearow",g:1},
+  {n:23,nom:"Ekans",g:1},{n:24,nom:"Arbok",g:1},{n:25,nom:"Pikachu",g:1},{n:26,nom:"Raichu",g:1},
+  {n:27,nom:"Sandshrew",g:1},{n:28,nom:"Sandslash",g:1},
+  {n:29,nom:"Nidoran♀",g:1},{n:30,nom:"Nidorina",g:1},{n:31,nom:"Nidoqueen",g:1},
+  {n:32,nom:"Nidoran♂",g:1},{n:33,nom:"Nidorino",g:1},{n:34,nom:"Nidoking",g:1},
+  {n:35,nom:"Clefairy",g:1},{n:36,nom:"Clefable",g:1},{n:37,nom:"Vulpix",g:1},{n:38,nom:"Ninetales",g:1},
+  {n:39,nom:"Jigglypuff",g:1},{n:40,nom:"Wigglytuff",g:1},{n:41,nom:"Zubat",g:1},{n:42,nom:"Golbat",g:1},
+  {n:43,nom:"Oddish",g:1},{n:44,nom:"Gloom",g:1},{n:45,nom:"Vileplume",g:1},
+  {n:46,nom:"Paras",g:1},{n:47,nom:"Parasect",g:1},{n:48,nom:"Venonat",g:1},{n:49,nom:"Venomoth",g:1},
+  {n:50,nom:"Diglett",g:1},{n:51,nom:"Dugtrio",g:1},{n:52,nom:"Meowth",g:1},{n:53,nom:"Persian",g:1},
+  {n:54,nom:"Psyduck",g:1},{n:55,nom:"Golduck",g:1},{n:56,nom:"Mankey",g:1},{n:57,nom:"Primeape",g:1},
+  {n:58,nom:"Growlithe",g:1},{n:59,nom:"Arcanine",g:1},
+  {n:60,nom:"Poliwag",g:1},{n:61,nom:"Poliwhirl",g:1},{n:62,nom:"Poliwrath",g:1},
+  {n:63,nom:"Abra",g:1},{n:64,nom:"Kadabra",g:1},{n:65,nom:"Alakazam",g:1},
+  {n:66,nom:"Machop",g:1},{n:67,nom:"Machoke",g:1},{n:68,nom:"Machamp",g:1},
+  {n:69,nom:"Bellsprout",g:1},{n:70,nom:"Weepinbell",g:1},{n:71,nom:"Victreebel",g:1},
+  {n:72,nom:"Tentacool",g:1},{n:73,nom:"Tentacruel",g:1},
+  {n:74,nom:"Geodude",g:1},{n:75,nom:"Graveler",g:1},{n:76,nom:"Golem",g:1},
+  {n:77,nom:"Ponyta",g:1},{n:78,nom:"Rapidash",g:1},{n:79,nom:"Slowpoke",g:1},{n:80,nom:"Slowbro",g:1},
+  {n:81,nom:"Magnemite",g:1},{n:82,nom:"Magneton",g:1},
+  {n:83,nom:"Farfetch'd",g:1},{n:84,nom:"Doduo",g:1},{n:85,nom:"Dodrio",g:1},
+  {n:86,nom:"Seel",g:1},{n:87,nom:"Dewgong",g:1},{n:88,nom:"Grimer",g:1},{n:89,nom:"Muk",g:1},
+  {n:90,nom:"Shellder",g:1},{n:91,nom:"Cloyster",g:1},
+  {n:92,nom:"Gastly",g:1},{n:93,nom:"Haunter",g:1},{n:94,nom:"Gengar",g:1},
+  {n:95,nom:"Onix",g:1},{n:96,nom:"Drowzee",g:1},{n:97,nom:"Hypno",g:1},
+  {n:98,nom:"Krabby",g:1},{n:99,nom:"Kingler",g:1},{n:100,nom:"Voltorb",g:1},{n:101,nom:"Electrode",g:1},
+  {n:102,nom:"Exeggcute",g:1},{n:103,nom:"Exeggutor",g:1},
+  {n:104,nom:"Cubone",g:1},{n:105,nom:"Marowak",g:1},
+  {n:106,nom:"Hitmonlee",g:1},{n:107,nom:"Hitmonchan",g:1},
+  {n:108,nom:"Lickitung",g:1},{n:109,nom:"Koffing",g:1},{n:110,nom:"Weezing",g:1},
+  {n:111,nom:"Rhyhorn",g:1},{n:112,nom:"Rhydon",g:1},{n:113,nom:"Chansey",g:1},{n:114,nom:"Tangela",g:1},
+  {n:115,nom:"Kangaskhan",g:1},{n:116,nom:"Horsea",g:1},{n:117,nom:"Seadra",g:1},
+  {n:118,nom:"Goldeen",g:1},{n:119,nom:"Seaking",g:1},{n:120,nom:"Staryu",g:1},{n:121,nom:"Starmie",g:1},
+  {n:122,nom:"Mr. Mime",g:1},{n:123,nom:"Scyther",g:1},{n:124,nom:"Jynx",g:1},
+  {n:125,nom:"Electabuzz",g:1},{n:126,nom:"Magmar",g:1},{n:127,nom:"Pinsir",g:1},{n:128,nom:"Tauros",g:1},
+  {n:129,nom:"Magikarp",g:1},{n:130,nom:"Gyarados",g:1},{n:131,nom:"Lapras",g:1},{n:132,nom:"Ditto",g:1},
+  {n:133,nom:"Eevee",g:1},{n:134,nom:"Vaporeon",g:1},{n:135,nom:"Jolteon",g:1},{n:136,nom:"Flareon",g:1},
+  {n:137,nom:"Porygon",g:1},{n:138,nom:"Omanyte",g:1},{n:139,nom:"Omastar",g:1},
+  {n:140,nom:"Kabuto",g:1},{n:141,nom:"Kabutops",g:1},{n:142,nom:"Aerodactyl",g:1},{n:143,nom:"Snorlax",g:1},
+  {n:144,nom:"Articuno",g:1},{n:145,nom:"Zapdos",g:1},{n:146,nom:"Moltres",g:1},
+  {n:147,nom:"Dratini",g:1},{n:148,nom:"Dragonair",g:1},{n:149,nom:"Dragonite",g:1},
+  {n:150,nom:"Mewtwo",g:1},{n:151,nom:"Mew",g:1},
+  {n:152,nom:"Chikorita",g:2},{n:153,nom:"Bayleef",g:2},{n:154,nom:"Meganium",g:2},
+  {n:155,nom:"Cyndaquil",g:2},{n:156,nom:"Quilava",g:2},{n:157,nom:"Typhlosion",g:2},
+  {n:158,nom:"Totodile",g:2},{n:159,nom:"Croconaw",g:2},{n:160,nom:"Feraligatr",g:2},
+  {n:161,nom:"Sentret",g:2},{n:162,nom:"Furret",g:2},{n:163,nom:"Hoothoot",g:2},{n:164,nom:"Noctowl",g:2},
+  {n:165,nom:"Ledyba",g:2},{n:166,nom:"Ledian",g:2},{n:167,nom:"Spinarak",g:2},{n:168,nom:"Ariados",g:2},
+  {n:169,nom:"Crobat",g:2},{n:170,nom:"Chinchou",g:2},{n:171,nom:"Lanturn",g:2},
+  {n:172,nom:"Pichu",g:2},{n:173,nom:"Cleffa",g:2},{n:174,nom:"Igglybuff",g:2},
+  {n:175,nom:"Togepi",g:2},{n:176,nom:"Togetic",g:2},{n:177,nom:"Natu",g:2},{n:178,nom:"Xatu",g:2},
+  {n:179,nom:"Mareep",g:2},{n:180,nom:"Flaaffy",g:2},{n:181,nom:"Ampharos",g:2},
+  {n:182,nom:"Bellossom",g:2},{n:183,nom:"Marill",g:2},{n:184,nom:"Azumarill",g:2},
+  {n:185,nom:"Sudowoodo",g:2},{n:186,nom:"Politoed",g:2},
+  {n:187,nom:"Hoppip",g:2},{n:188,nom:"Skiploom",g:2},{n:189,nom:"Jumpluff",g:2},
+  {n:190,nom:"Aipom",g:2},{n:191,nom:"Sunkern",g:2},{n:192,nom:"Sunflora",g:2},
+  {n:193,nom:"Yanma",g:2},{n:194,nom:"Wooper",g:2},{n:195,nom:"Quagsire",g:2},
+  {n:196,nom:"Espeon",g:2},{n:197,nom:"Umbreon",g:2},{n:198,nom:"Murkrow",g:2},
+  {n:199,nom:"Slowking",g:2},{n:200,nom:"Misdreavus",g:2},{n:201,nom:"Unown",g:2},
+  {n:202,nom:"Wobbuffet",g:2},{n:203,nom:"Girafarig",g:2},
+  {n:204,nom:"Pineco",g:2},{n:205,nom:"Forretress",g:2},{n:206,nom:"Dunsparce",g:2},
+  {n:207,nom:"Gligar",g:2},{n:208,nom:"Steelix",g:2},
+  {n:209,nom:"Snubbull",g:2},{n:210,nom:"Granbull",g:2},{n:211,nom:"Qwilfish",g:2},
+  {n:212,nom:"Scizor",g:2},{n:213,nom:"Shuckle",g:2},{n:214,nom:"Heracross",g:2},
+  {n:215,nom:"Sneasel",g:2},{n:216,nom:"Teddiursa",g:2},{n:217,nom:"Ursaring",g:2},
+  {n:218,nom:"Slugma",g:2},{n:219,nom:"Magcargo",g:2},{n:220,nom:"Swinub",g:2},{n:221,nom:"Piloswine",g:2},
+  {n:222,nom:"Corsola",g:2},{n:223,nom:"Remoraid",g:2},{n:224,nom:"Octillery",g:2},
+  {n:225,nom:"Delibird",g:2},{n:226,nom:"Mantine",g:2},{n:227,nom:"Skarmory",g:2},
+  {n:228,nom:"Houndour",g:2},{n:229,nom:"Houndoom",g:2},{n:230,nom:"Kingdra",g:2},
+  {n:231,nom:"Phanpy",g:2},{n:232,nom:"Donphan",g:2},{n:233,nom:"Porygon2",g:2},
+  {n:234,nom:"Stantler",g:2},{n:235,nom:"Smeargle",g:2},{n:236,nom:"Tyrogue",g:2},
+  {n:237,nom:"Hitmontop",g:2},{n:238,nom:"Smoochum",g:2},{n:239,nom:"Elekid",g:2},
+  {n:240,nom:"Magby",g:2},{n:241,nom:"Miltank",g:2},{n:242,nom:"Blissey",g:2},
+  {n:243,nom:"Raikou",g:2},{n:244,nom:"Entei",g:2},{n:245,nom:"Suicune",g:2},
+  {n:246,nom:"Larvitar",g:2},{n:247,nom:"Pupitar",g:2},{n:248,nom:"Tyranitar",g:2},
+  {n:249,nom:"Lugia",g:2},{n:250,nom:"Ho-oh",g:2},{n:251,nom:"Celebi",g:2},
+  {n:252,nom:"Treecko",g:3},{n:253,nom:"Grovyle",g:3},{n:254,nom:"Sceptile",g:3},
+  {n:255,nom:"Torchic",g:3},{n:256,nom:"Combusken",g:3},{n:257,nom:"Blaziken",g:3},
+  {n:258,nom:"Mudkip",g:3},{n:259,nom:"Marshtomp",g:3},{n:260,nom:"Swampert",g:3},
+  {n:261,nom:"Poochyena",g:3},{n:262,nom:"Mightyena",g:3},{n:263,nom:"Zigzagoon",g:3},{n:264,nom:"Linoone",g:3},
+  {n:265,nom:"Wurmple",g:3},{n:266,nom:"Silcoon",g:3},{n:267,nom:"Beautifly",g:3},
+  {n:268,nom:"Cascoon",g:3},{n:269,nom:"Dustox",g:3},
+  {n:270,nom:"Lotad",g:3},{n:271,nom:"Lombre",g:3},{n:272,nom:"Ludicolo",g:3},
+  {n:273,nom:"Seedot",g:3},{n:274,nom:"Nuzleaf",g:3},{n:275,nom:"Shiftry",g:3},
+  {n:276,nom:"Taillow",g:3},{n:277,nom:"Swellow",g:3},{n:278,nom:"Wingull",g:3},{n:279,nom:"Pelipper",g:3},
+  {n:280,nom:"Ralts",g:3},{n:281,nom:"Kirlia",g:3},{n:282,nom:"Gardevoir",g:3},
+  {n:283,nom:"Surskit",g:3},{n:284,nom:"Masquerain",g:3},
+  {n:285,nom:"Shroomish",g:3},{n:286,nom:"Breloom",g:3},
+  {n:287,nom:"Slakoth",g:3},{n:288,nom:"Vigoroth",g:3},{n:289,nom:"Slaking",g:3},
+  {n:290,nom:"Nincada",g:3},{n:291,nom:"Ninjask",g:3},{n:292,nom:"Shedinja",g:3},
+  {n:293,nom:"Whismur",g:3},{n:294,nom:"Loudred",g:3},{n:295,nom:"Exploud",g:3},
+  {n:296,nom:"Makuhita",g:3},{n:297,nom:"Hariyama",g:3},{n:298,nom:"Azurill",g:3},{n:299,nom:"Nosepass",g:3},
+  {n:300,nom:"Skitty",g:3},{n:301,nom:"Delcatty",g:3},{n:302,nom:"Sableye",g:3},{n:303,nom:"Mawile",g:3},
+  {n:304,nom:"Aron",g:3},{n:305,nom:"Lairon",g:3},{n:306,nom:"Aggron",g:3},
+  {n:307,nom:"Meditite",g:3},{n:308,nom:"Medicham",g:3},
+  {n:309,nom:"Electrike",g:3},{n:310,nom:"Manectric",g:3},
+  {n:311,nom:"Plusle",g:3},{n:312,nom:"Minun",g:3},{n:313,nom:"Volbeat",g:3},{n:314,nom:"Illumise",g:3},
+  {n:315,nom:"Roselia",g:3},{n:316,nom:"Gulpin",g:3},{n:317,nom:"Swalot",g:3},
+  {n:318,nom:"Carvanha",g:3},{n:319,nom:"Sharpedo",g:3},{n:320,nom:"Wailmer",g:3},{n:321,nom:"Wailord",g:3},
+  {n:322,nom:"Numel",g:3},{n:323,nom:"Camerupt",g:3},{n:324,nom:"Torkoal",g:3},
+  {n:325,nom:"Spoink",g:3},{n:326,nom:"Grumpig",g:3},{n:327,nom:"Spinda",g:3},
+  {n:328,nom:"Trapinch",g:3},{n:329,nom:"Vibrava",g:3},{n:330,nom:"Flygon",g:3},
+  {n:331,nom:"Cacnea",g:3},{n:332,nom:"Cacturne",g:3},{n:333,nom:"Swablu",g:3},{n:334,nom:"Altaria",g:3},
+  {n:335,nom:"Zangoose",g:3},{n:336,nom:"Seviper",g:3},{n:337,nom:"Lunatone",g:3},{n:338,nom:"Solrock",g:3},
+  {n:339,nom:"Barboach",g:3},{n:340,nom:"Whiscash",g:3},{n:341,nom:"Corphish",g:3},{n:342,nom:"Crawdaunt",g:3},
+  {n:343,nom:"Baltoy",g:3},{n:344,nom:"Claydol",g:3},{n:345,nom:"Lileep",g:3},{n:346,nom:"Cradily",g:3},
+  {n:347,nom:"Anorith",g:3},{n:348,nom:"Armaldo",g:3},{n:349,nom:"Feebas",g:3},{n:350,nom:"Milotic",g:3},
+  {n:351,nom:"Castform",g:3},{n:352,nom:"Kecleon",g:3},{n:353,nom:"Shuppet",g:3},{n:354,nom:"Banette",g:3},
+  {n:355,nom:"Duskull",g:3},{n:356,nom:"Dusclops",g:3},{n:357,nom:"Tropius",g:3},{n:358,nom:"Chimecho",g:3},
+  {n:359,nom:"Absol",g:3},{n:360,nom:"Wynaut",g:3},{n:361,nom:"Snorunt",g:3},{n:362,nom:"Glalie",g:3},
+  {n:363,nom:"Spheal",g:3},{n:364,nom:"Sealeo",g:3},{n:365,nom:"Walrein",g:3},
+  {n:366,nom:"Clamperl",g:3},{n:367,nom:"Huntail",g:3},{n:368,nom:"Gorebyss",g:3},
+  {n:369,nom:"Relicanth",g:3},{n:370,nom:"Luvdisc",g:3},
+  {n:371,nom:"Bagon",g:3},{n:372,nom:"Shelgon",g:3},{n:373,nom:"Salamence",g:3},
+  {n:374,nom:"Beldum",g:3},{n:375,nom:"Metang",g:3},{n:376,nom:"Metagross",g:3},
+  {n:377,nom:"Regirock",g:3},{n:378,nom:"Regice",g:3},{n:379,nom:"Registeel",g:3},
+  {n:380,nom:"Latias",g:3},{n:381,nom:"Latios",g:3},{n:382,nom:"Kyogre",g:3},
+  {n:383,nom:"Groudon",g:3},{n:384,nom:"Rayquaza",g:3},{n:385,nom:"Jirachi",g:3},{n:386,nom:"Deoxys",g:3},
+  {n:387,nom:"Turtwig",g:4},{n:388,nom:"Grotle",g:4},{n:389,nom:"Torterra",g:4},
+  {n:390,nom:"Chimchar",g:4},{n:391,nom:"Monferno",g:4},{n:392,nom:"Infernape",g:4},
+  {n:393,nom:"Piplup",g:4},{n:394,nom:"Prinplup",g:4},{n:395,nom:"Empoleon",g:4},
+  {n:396,nom:"Starly",g:4},{n:397,nom:"Staravia",g:4},{n:398,nom:"Staraptor",g:4},
+  {n:399,nom:"Bidoof",g:4},{n:400,nom:"Bibarel",g:4},{n:401,nom:"Kricketot",g:4},{n:402,nom:"Kricketune",g:4},
+  {n:403,nom:"Shinx",g:4},{n:404,nom:"Luxio",g:4},{n:405,nom:"Luxray",g:4},
+  {n:406,nom:"Budew",g:4},{n:407,nom:"Roserade",g:4},{n:408,nom:"Cranidos",g:4},{n:409,nom:"Rampardos",g:4},
+  {n:410,nom:"Shieldon",g:4},{n:411,nom:"Bastiodon",g:4},
+  {n:412,nom:"Burmy",g:4},{n:413,nom:"Wormadam",g:4},{n:414,nom:"Mothim",g:4},
+  {n:415,nom:"Combee",g:4},{n:416,nom:"Vespiquen",g:4},{n:417,nom:"Pachirisu",g:4},
+  {n:418,nom:"Buizel",g:4},{n:419,nom:"Floatzel",g:4},{n:420,nom:"Cherubi",g:4},{n:421,nom:"Cherrim",g:4},
+  {n:422,nom:"Shellos",g:4},{n:423,nom:"Gastrodon",g:4},{n:424,nom:"Ambipom",g:4},
+  {n:425,nom:"Drifloon",g:4},{n:426,nom:"Drifblim",g:4},{n:427,nom:"Buneary",g:4},{n:428,nom:"Lopunny",g:4},
+  {n:429,nom:"Mismagius",g:4},{n:430,nom:"Honchkrow",g:4},{n:431,nom:"Glameow",g:4},{n:432,nom:"Purugly",g:4},
+  {n:433,nom:"Chingling",g:4},{n:434,nom:"Stunky",g:4},{n:435,nom:"Skuntank",g:4},
+  {n:436,nom:"Bronzor",g:4},{n:437,nom:"Bronzong",g:4},{n:438,nom:"Bonsly",g:4},{n:439,nom:"Mime Jr.",g:4},
+  {n:440,nom:"Happiny",g:4},{n:441,nom:"Chatot",g:4},{n:442,nom:"Spiritomb",g:4},
+  {n:443,nom:"Gible",g:4},{n:444,nom:"Gabite",g:4},{n:445,nom:"Garchomp",g:4},
+  {n:446,nom:"Munchlax",g:4},{n:447,nom:"Riolu",g:4},{n:448,nom:"Lucario",g:4},
+  {n:449,nom:"Hippopotas",g:4},{n:450,nom:"Hippowdon",g:4},
+  {n:451,nom:"Skorupi",g:4},{n:452,nom:"Drapion",g:4},{n:453,nom:"Croagunk",g:4},{n:454,nom:"Toxicroak",g:4},
+  {n:455,nom:"Carnivine",g:4},{n:456,nom:"Finneon",g:4},{n:457,nom:"Lumineon",g:4},
+  {n:458,nom:"Mantyke",g:4},{n:459,nom:"Snover",g:4},{n:460,nom:"Abomasnow",g:4},
+  {n:461,nom:"Weavile",g:4},{n:462,nom:"Magnezone",g:4},{n:463,nom:"Lickilicky",g:4},
+  {n:464,nom:"Rhyperior",g:4},{n:465,nom:"Tangrowth",g:4},{n:466,nom:"Electivire",g:4},
+  {n:467,nom:"Magmortar",g:4},{n:468,nom:"Togekiss",g:4},{n:469,nom:"Yanmega",g:4},
+  {n:470,nom:"Leafeon",g:4},{n:471,nom:"Glaceon",g:4},{n:472,nom:"Gliscor",g:4},
+  {n:473,nom:"Mamoswine",g:4},{n:474,nom:"Porygon-Z",g:4},{n:475,nom:"Gallade",g:4},
+  {n:476,nom:"Probopass",g:4},{n:477,nom:"Dusknoir",g:4},{n:478,nom:"Froslass",g:4},
+  {n:479,nom:"Rotom",g:4},{n:480,nom:"Uxie",g:4},{n:481,nom:"Mesprit",g:4},{n:482,nom:"Azelf",g:4},
+  {n:483,nom:"Dialga",g:4},{n:484,nom:"Palkia",g:4},{n:485,nom:"Heatran",g:4},
+  {n:486,nom:"Regigigas",g:4},{n:487,nom:"Giratina",g:4},{n:488,nom:"Cresselia",g:4},
+  {n:489,nom:"Phione",g:4},{n:490,nom:"Manaphy",g:4},{n:491,nom:"Darkrai",g:4},
+  {n:492,nom:"Shaymin",g:4},{n:493,nom:"Arceus",g:4}
+];
+
+const ALIASES={
+  "nidoran f":"Nidoran♀","nidoran hembra":"Nidoran♀","nidoran-f":"Nidoran♀","nidoranf":"Nidoran♀",
+  "nidoran m":"Nidoran♂","nidoran macho":"Nidoran♂","nidoran-m":"Nidoran♂","nidoranm":"Nidoran♂",
+  "farfetchd":"Farfetch'd","farfetch":"Farfetch'd",
+  "mr mime":"Mr. Mime","mrmime":"Mr. Mime",
+  "mime jr":"Mime Jr.","mimejr":"Mime Jr.",
+  "ho oh":"Ho-oh","hooh":"Ho-oh",
+  "porygon z":"Porygon-Z","porygonz":"Porygon-Z",
+  "porygon 2":"Porygon2",
+};
+
+function norm(s){
+  return s.toLowerCase().trim()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[''`]/g,"'")
+    .replace(/♀/g,"f").replace(/♂/g,"m");
+}
+
+function sprURL(n){return`https://raw.githubusercontent.com/terremotoparatodos/sprites-overworld/master/down/${String(n).padStart(4,'0')}.png`;}
+
+// ─ state ─
+let G={},MODE='local',SEL=0,ROOM=null,ME=1;
+let PKM=[],NM={},tInt=null,pollInt=null;
+
+// ─ setup ─
+function selGen(g){
+  SEL=g;
+  document.querySelectorAll('.reg-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelector(`.reg-btn[data-gen="${g}"]`).classList.add('sel');
+  chkReady();
+}
+function setMode(m,el){
+  MODE=m;
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.mode-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('sel');
+  document.getElementById('panel-'+m).classList.add('active');
+  chkReady();
+}
+function chkReady(){
+  const ok=SEL>0&&(MODE!=='join'||document.getElementById('room-code-in').value.trim().length===4);
+  document.getElementById('start-btn').disabled=!ok;
+}
+
+
+async function onStart(){
+  const p1=document.getElementById('pi1').value.trim()||'Guti';
+  const p2=document.getElementById('pi2').value.trim()||'Sky';
+  PKM=ALL.filter(p=>p.g===SEL);
+  NM={};
+  PKM.forEach(p=>{NM[norm(p.nom)]=p;});
+  Object.entries(ALIASES).forEach(([k,v])=>{const f=PKM.find(p=>p.nom===v);if(f)NM[norm(k)]=f;});
+  G={p1,p2,region:SEL,scores:{1:0,2:0},found:{},cur:1,timeLeft:1200,running:false,total:REGIONS[SEL].total};
+  document.getElementById('cam1-label').textContent=p1.toLowerCase();
+  document.getElementById('cam2-label').textContent=p2.toLowerCase();
+  if(MODE==='local') startLocal();
+  else if(MODE==='host') await createRoom(p1,p2,SEL);
+  else await joinRoom(document.getElementById('room-code-in').value.trim(),p2);
+}
+
+function startLocal(){
+  setupGameUI();
+  document.getElementById('turn-banner').classList.add('off');
+  document.getElementById('turn-banner').classList.remove('on');
+  document.getElementById('turn-banner').style.display='none';
+  document.getElementById('btn-sw').style.display='';
+  document.getElementById('poke-input').disabled=false;
+  document.getElementById('sub-btn').disabled=false;
+  showScreen('game');buildGrid();updateTurn();renderTimer();
+  G.running=true;
+  tInt=setInterval(()=>{G.timeLeft--;renderTimer();if(G.timeLeft<=0)endGame();},1000);
+  setTimeout(()=>document.getElementById('poke-input').focus(),80);
+}
+
+function setupGameUI(){
+  document.getElementById('hdr-p1').textContent=G.p1;
+  document.getElementById('hdr-p2').textContent=G.p2;
+  document.getElementById('sc1').textContent='0';
+  document.getElementById('sc2').textContent='0';
+  updateProgress(0, G.total);
+}
+
+// ─ online host ─
+async function createRoom(p1,p2,gen){
+  const code=rndCode(); ROOM=code; ME=1;
+  try{
+    await sb('sporcle_rooms',{method:'POST',prefer:'return=minimal',
+      body:{code,p1_name:p1,p2_name:p2,gen,status:'waiting',cur_player:1,time_left:1200,scores_p1:0,scores_p2:0,guest_connected:false}});
+  }catch(e){alert('Error Supabase: '+e.message+'\n¿Creaste las tablas con el SQL?');return;}
+  document.getElementById('lobby-code').textContent=code;
+  document.getElementById('lp1name').textContent=p1;
+  document.getElementById('lp2name').textContent=p2;
+  showScreen('lobby');
+  const poll=setInterval(async()=>{
+    try{const r=await sb(`sporcle_rooms?code=eq.${code}&select=guest_connected`);
+      if(r&&r[0]&&r[0].guest_connected){clearInterval(poll);
+        document.getElementById('lp2card').classList.add('ok');
+        document.getElementById('lp2st').textContent='✓ conectado';
+        document.getElementById('lp2st').classList.add('ok');
+        setTimeout(()=>hostStart(code),1200);}}catch(e){}},1500);
+}
+async function hostStart(code){
+  await sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{status:'playing'}});
+  startOnline(code,1);
+}
+
+// ─ online guest ─
+async function joinRoom(code,myName){
+  try{
+    const r=await sb(`sporcle_rooms?code=eq.${code}&select=*`);
+    if(!r||!r[0]){alert('Sala no encontrada: '+code);return;}
+    const room=r[0];
+    await sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{guest_connected:true}});
+    ME=2; ROOM=code;
+    G.p1=room.p1_name;G.p2=room.p2_name;G.region=room.gen;G.total=REGIONS[room.gen].total;
+    PKM=ALL.filter(p=>p.g===room.gen);NM={};
+    PKM.forEach(p=>{NM[norm(p.nom)]=p;});
+    Object.entries(ALIASES).forEach(([k,v])=>{const f=PKM.find(p=>p.nom===v);if(f)NM[norm(k)]=f;});
+    document.getElementById('cam1-label').textContent=room.p1_name.toLowerCase();
+    document.getElementById('cam2-label').textContent=room.p2_name.toLowerCase();
+    document.getElementById('wait-info').textContent='Sala '+code+' · '+REGIONS[room.gen].name+' · '+room.p1_name+' vs '+room.p2_name;
+    showScreen('waiting');
+    const poll=setInterval(async()=>{
+      try{const r2=await sb(`sporcle_rooms?code=eq.${code}&select=status`);
+        if(r2&&r2[0]&&r2[0].status==='playing'){clearInterval(poll);startOnline(code,2);}}catch(e){}},1500);
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ─ online game ─
+function startOnline(code,me){
+  ME=me; ROOM=code;
+  setupGameUI();
+  showScreen('game');buildGrid();updateTurnOnline();renderTimer();
+  G.running=true;
+  const seen=new Set();
+  pollInt=setInterval(async()=>{
+    if(!G.running)return;
+    try{
+      // sync found
+      const found=await sb(`sporcle_found?room_code=eq.${code}&select=*&order=found_at.asc`);
+      if(found)found.forEach(r=>{
+        if(!seen.has(r.pkm_num)){seen.add(r.pkm_num);
+          if(!G.found[r.pkm_num]){
+            G.found[r.pkm_num]=r.player;G.scores[r.player]++;
+            markSlot(r.pkm_num,r.player,false);
+            document.getElementById('sc1').textContent=G.scores[1];
+            document.getElementById('sc2').textContent=G.scores[2];
+            updateProgress(Object.keys(G.found).length, G.total);
+            if(r.player!==ME){const pk=PKM.find(p=>p.n===r.pkm_num);showFB('⚡ '+(r.player===1?G.p1:G.p2)+' encontró '+(pk?pk.nom:'#'+r.pkm_num),'fbother',2000);}
+          }}});
+      // sync room
+      const rm=await sb(`sporcle_rooms?code=eq.${code}&select=time_left,cur_player,status`);
+      if(rm&&rm[0]){
+        if(ME===2){G.timeLeft=rm[0].time_left;renderTimer();}
+        if(rm[0].cur_player!==G.cur){G.cur=rm[0].cur_player;updateTurnOnline();}
+        if(rm[0].status==='ended'&&G.running){G.running=false;clearInterval(pollInt);endGame();}
+      }
+    }catch(e){}
+  },1200);
+  // host runs timer
+  if(me===1){
+    tInt=setInterval(async()=>{
+      G.timeLeft--;renderTimer();
+      if(G.timeLeft%5===0){try{await sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{time_left:G.timeLeft}});}catch(e){}}
+      if(G.timeLeft<=0){clearInterval(tInt);try{await sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{status:'ended',time_left:0}});}catch(e){}endGame();}
+    },1000);
+  }
+  setTimeout(()=>{if(G.cur===ME)document.getElementById('poke-input').focus();},80);
+}
+
+// ─ turn ─
+function updateTurn(){
+  const dot=document.getElementById('tdot'),tn=document.getElementById('tname');
+  if(!G.p2||G.p2===''){dot.className='tdot dots-solo';tn.textContent=G.p1;tn.className='tname tnsolo';}
+  else if(G.cur===1){dot.className='tdot dot1';tn.textContent=G.p1;tn.className='tname tn1';document.getElementById('poke-input').style.borderColor='var(--p1bd)';}
+  else{dot.className='tdot dot2';tn.textContent=G.p2;tn.className='tname tn2';document.getElementById('poke-input').style.borderColor='var(--p2bd)';}
+}
+function updateTurnOnline(){
+  updateTurn();
+  const bann=document.getElementById('turn-banner');
+  const mine=G.cur===ME;
+  bann.style.display='';
+  bann.textContent=mine?'⬤ TU TURNO — escribí!':'⬤ TURNO DE '+(G.cur===1?G.p1:G.p2);
+  bann.className='turn-banner '+(mine?'on':'off');
+  document.getElementById('poke-input').disabled=!mine;
+  document.getElementById('sub-btn').disabled=!mine;
+  document.getElementById('poke-input').placeholder=mine?'Escribí un Pokémon...':'Esperando a '+(G.cur===1?G.p1:G.p2)+'...';
+  if(mine)setTimeout(()=>document.getElementById('poke-input').focus(),50);
+}
+async function switchPlayer(){
+  G.cur=G.cur===1?2:1;
+  if(MODE==='local'){updateTurn();showFB('🔄 Turno de '+(G.cur===1?G.p1:G.p2),'fbinfo',900);}
+  else{updateTurnOnline();try{await sb(`sporcle_rooms?code=eq.${ROOM}`,{method:'PATCH',prefer:'return=minimal',body:{cur_player:G.cur}});}catch(e){}}
+  document.getElementById('poke-input').focus();
+}
+
+// ─ input ─
+
+function trySubmit(){
+  if(!G.running)return;
+  if(MODE!=='local'&&G.cur!==ME)return;
+  const v=document.getElementById('poke-input').value.trim();
+  if(!v)return;
+  const pk=NM[norm(v)];
+  if(!pk){flashIn('ferr');showFB('❌ No encontrado: "'+v+'"','fberr');return;}
+  if(G.found[pk.n]){showFB('⚠️ '+pk.nom+' ya fue encontrado','fbdup');document.getElementById('poke-input').select();return;}
+  doFind(pk);
+}
+async function doFind(pk){
+  const pl=G.cur;
+  G.found[pk.n]=pl;G.scores[pl]++;
+  document.getElementById('sc1').textContent=G.scores[1];
+  document.getElementById('sc2').textContent=G.scores[2];
+  const tot=Object.keys(G.found).length;
+  updateProgress(tot, G.total);
+  markSlot(pk.n,pl,true);
+  flashIn('fok');
+  document.getElementById('poke-input').value='';
+  showFB('✓ '+pk.nom+' (#'+pk.n+')','fbok');
+  const slot=document.getElementById('slot-'+pk.n);
+  if(slot){
+    const grid=document.getElementById('poke-grid');
+    const slotTop=slot.offsetTop;
+    const slotBot=slotTop+slot.offsetHeight;
+    const gridScroll=grid.scrollTop;
+    const gridVis=grid.clientHeight;
+    if(slotBot>gridScroll+gridVis){
+      grid.scrollTo({top:slotBot-gridVis,behavior:'smooth'});
+    }else if(slotTop<gridScroll){
+      grid.scrollTo({top:slotTop,behavior:'smooth'});
+    }
+  }
+  if(MODE!=='local'){
+    try{await sb('sporcle_found',{method:'POST',prefer:'return=minimal',body:{room_code:ROOM,pkm_num:pk.n,player:pl,pkm_name:pk.nom}});}catch(e){}
+  }
+  if(tot>=G.total)endGame();
+}
+
+// ─ grid ─
+function updateProgress(found, total){
+  const el=document.getElementById('progress');
+  const pct=total>0?found/total:0;
+  el.textContent=found+' / '+total;
+  if(pct>=0.75) el.style.color='var(--grn)';
+  else if(pct>=0.40) el.style.color='var(--warn)';
+  else el.style.color='var(--danger)';
+}
+
+function setGridHeight(){
+  // Measure one slot width (= column width) and set --grid-3rows = 3 * slotSize + 2*gap + padding
+  const grid = document.getElementById('poke-grid');
+  const firstSlot = grid.querySelector('.pslot');
+  if(!firstSlot) return;
+  const slotW = firstSlot.getBoundingClientRect().width;
+  const gap = 3;
+  const padV = 6 * 2; // padding top + bottom
+  const height = Math.ceil(3 * slotW + 2 * gap + padV);
+  document.documentElement.style.setProperty('--grid-3rows', height + 'px');
+}
+
+function buildGrid(){
+  const g=document.getElementById('poke-grid');g.innerHTML='';
+  PKM.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='pslot empty';d.id='slot-'+p.n;
+    d.innerHTML=`<div class="slot-inner"><span class="slot-num">#${p.n}</span><div class="slot-mid"><img class="slot-sprite" src="${sprURL(p.n)}" alt="" loading="lazy"><span class="slot-q">?</span></div><span class="slot-name">${p.nom}</span></div>`;
+    g.appendChild(d);
+  });
+  // After paint, measure and lock grid to 3 rows
+  requestAnimationFrame(() => requestAnimationFrame(setGridHeight));
+}
+
+window.addEventListener('resize', setGridHeight);
+
+function markSlot(n,pl,anim){
+  const s=document.getElementById('slot-'+n);if(!s)return;
+  const cls=G.p2?pl===1?'found-p1':'found-p2':'found-solo';
+  s.className='pslot '+cls+(anim?' pop':'');
+}
+
+// ─ timer ─
+function renderTimer(){
+  const m=Math.floor(G.timeLeft/60),s=G.timeLeft%60;
+  const el=document.getElementById('timer');
+  el.textContent=m+':'+String(s).padStart(2,'0');
+  el.className='timer';
+  if(G.timeLeft<=60)el.classList.add('danger');
+  else if(G.timeLeft<=180)el.classList.add('warn');
+}
+
+// ─ feedback ─
+let fbt=null;
+function showFB(html,cls,dur){
+  const el=document.getElementById('feedback');
+  el.innerHTML=html;el.className='feedback '+(cls||'fbinfo');
+  if(fbt)clearTimeout(fbt);
+  if(dur)fbt=setTimeout(()=>{el.innerHTML='';el.className='feedback fbempty';},dur);
+}
+function flashIn(cls){
+  const i=document.getElementById('poke-input');
+  i.classList.add(cls);setTimeout(()=>i.classList.remove(cls),400);
+}
+
+// ─ end ─
+async function giveUp(){
+  if(!confirm('¿Revelar respuestas y terminar?'))return;
+  if(ROOM){try{await sb(`sporcle_rooms?code=eq.${ROOM}`,{method:'PATCH',prefer:'return=minimal',body:{status:'ended'}});}catch(e){}}
+  endGame();
+}
+function endGame(){
+  clearInterval(tInt);clearInterval(pollInt);G.running=false;
+  PKM.forEach(p=>{
+    if(!G.found[p.n]){
+      const s=document.getElementById('slot-'+p.n);if(!s)return;
+      s.className='pslot reveal';
+    }
+  });
+  setTimeout(showEnd,900);
+}
+function showEnd(){
+  const tot=Object.keys(G.found).length,pct=Math.round(tot/G.total*100);
+  document.getElementById('end-title').textContent=tot>=G.total?'¡COMPLETADO!':'¡TIEMPO!';
+  document.getElementById('end-total').textContent=tot+' DE '+G.total+' · '+REGIONS[G.region].name.toUpperCase()+' · '+pct+'%';
+  const cards=document.getElementById('final-cards');
+  if(G.p2){
+    const w=G.scores[1]>G.scores[2]?1:G.scores[2]>G.scores[1]?2:0;
+    cards.innerHTML=`<div class="fc fcp1 ${w===1?'win':''}"><div class="fc-name">${G.p1}</div><div class="fc-num">${G.scores[1]}</div><div class="fc-pct">${Math.round(G.scores[1]/G.total*100)}%</div>${w===1?'<div class="win-tag">★ GANADOR</div>':''}</div><div class="fc fcp2 ${w===2?'win':''}"><div class="fc-name">${G.p2}</div><div class="fc-num">${G.scores[2]}</div><div class="fc-pct">${Math.round(G.scores[2]/G.total*100)}%</div>${w===2?'<div class="win-tag">★ GANADOR</div>':''}</div>`;
+  }else{
+    cards.innerHTML=`<div class="fc fcsolo"><div class="fc-name">${G.p1}</div><div class="fc-num">${G.scores[1]}</div><div class="fc-pct">${pct}%</div></div>`;
+  }
+  document.getElementById('missed-pills').innerHTML=PKM.filter(p=>!G.found[p.n]).map(p=>`<span class="missed-pill">#${p.n} ${p.nom}</span>`).join('');
+  showScreen('end');
+}
+
+function resetGame(){clearInterval(tInt);clearInterval(pollInt);ROOM=null;ME=1;MODE='local';SEL=0;document.querySelectorAll('.reg-btn').forEach(b=>b.classList.remove('sel'));document.getElementById('start-btn').disabled=true;showScreen('setup');}
+function rndCode(){return Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*23)]).join('');}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+window.addEventListener('beforeunload',e=>{if(G.running){e.preventDefault();e.returnValue='';}});
+
+// ─ bind all handlers (replaces inline onclick) ─
+document.querySelectorAll('.reg-btn').forEach(b=>{
+  b.addEventListener('click',()=>selGen(parseInt(b.dataset.gen)));
+});
+document.getElementById('tab-local').addEventListener('click',function(){setMode('local',this);});
+document.getElementById('tab-host').addEventListener('click',function(){setMode('host',this);});
+document.getElementById('tab-join').addEventListener('click',function(){setMode('join',this);});
+document.getElementById('start-btn').addEventListener('click',onStart);
+document.getElementById('sub-btn').addEventListener('click',trySubmit);
+document.getElementById('btn-sw').addEventListener('click',switchPlayer);
+document.querySelector('.btn-gu').addEventListener('click',giveUp);
+document.querySelector('.replay-btn').addEventListener('click',resetGame);
+document.getElementById('room-code-in').addEventListener('input',function(){
+  this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'');chkReady();
+});
+document.getElementById('poke-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')trySubmit();
+});
+
+}); // end DOMContentLoaded
+</script>
+</body>
+</html>
