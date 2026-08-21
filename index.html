@@ -450,7 +450,42 @@ async function sb(path,o={}){
     method:o.method||'GET',body:o.body?JSON.stringify(o.body):undefined
   });
   if(!r.ok){const t=await r.text();throw new Error(t);}
-  return r.status===204?null:r.json();
+  if(r.status===204||r.status===201) return null;
+  const txt=await r.text();
+  if(!txt||txt.trim()==='[]'||txt.trim()==='') return null;
+  try{return JSON.parse(txt);}catch(e){return null;}
+}
+
+// ── Supabase Realtime via WebSocket ──
+let rtWS=null, rtSubs={};
+function subscribeRealtime(topic, cb){
+  if(!rtWS || rtWS.readyState>1) openRealtimeWS();
+  rtSubs[topic]=cb;
+  const send=()=>rtWS.send(JSON.stringify({topic,event:'phx_join',payload:{config:{broadcast:{self:false},presence:{key:''}}},ref:topic}));
+  if(rtWS.readyState===1) send();
+  else rtWS.addEventListener('open',send,{once:true});
+}
+function openRealtimeWS(){
+  const url=SB.replace('https','wss')+'/realtime/v1/websocket?apikey='+SK+'&vsn=1.0.0';
+  rtWS=new WebSocket(url);
+  rtWS.onopen=()=>{
+    rtWS.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'}));
+    setInterval(()=>{if(rtWS.readyState===1)rtWS.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'}));},25000);
+  };
+  rtWS.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(!d.topic||!d.payload) return;
+    const cb=rtSubs[d.topic];
+    if(cb && (d.event==='INSERT'||d.event==='UPDATE')){
+      cb(d.event, d.payload.record||d.payload.new);
+    }
+  };
+  rtWS.onerror=err=>console.warn('RT error',err);
+  rtWS.onclose=()=>{ if(G.running) setTimeout(openRealtimeWS,2000); };
+}
+function closeRealtime(){
+  rtSubs={};
+  if(rtWS){ rtWS.onclose=null; rtWS.close(); rtWS=null; }
 }
 
 const REGIONS={1:{name:'Kanto',total:151},2:{name:'Johto',total:100},3:{name:'Hoenn',total:135},4:{name:'Sinnoh',total:107}};
@@ -925,7 +960,7 @@ async function giveUp(){
   endGame();
 }
 function endGame(){
-  clearInterval(tInt);clearInterval(pollInt);G.running=false;
+  clearInterval(tInt);G.running=false;closeRealtime();
   PKM.forEach(p=>{
     if(!G.found[p.n]){
       const s=document.getElementById('slot-'+p.n);if(!s)return;
@@ -949,7 +984,7 @@ function showEnd(){
   showScreen('end');
 }
 
-function resetGame(){clearInterval(tInt);clearInterval(pollInt);ROOM=null;ME=1;MODE='local';SEL=0;document.querySelectorAll('.reg-btn').forEach(b=>b.classList.remove('sel'));document.getElementById('start-btn').disabled=true;showScreen('setup');}
+function resetGame(){clearInterval(tInt);closeRealtime();ROOM=null;ME=1;MODE='local';SEL=0;document.querySelectorAll('.reg-btn').forEach(b=>b.classList.remove('sel'));document.getElementById('start-btn').disabled=true;showScreen('setup');}
 function rndCode(){return Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*23)]).join('');}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 window.addEventListener('beforeunload',e=>{if(G.running){e.preventDefault();e.returnValue='';}});
