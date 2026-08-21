@@ -779,36 +779,60 @@ async function joinRoom(code,myName){
 }
 
 // ─ online game ─
+function applyRemoteFind(pkm_num, player){
+  if(G.found[pkm_num]) return;
+  G.found[pkm_num]=player;
+  G.scores[player]++;
+  markSlot(pkm_num, player, true);
+  document.getElementById('sc1').textContent=G.scores[1];
+  document.getElementById('sc2').textContent=G.scores[2];
+  updateProgress(Object.keys(G.found).length, G.total);
+  // scroll + feedback en AMBOS lados
+  const pk=PKM.find(p=>p.n===pkm_num);
+  const who=player===1?G.p1:G.p2;
+  if(player!==ME){
+    showFB('⚡ '+who+' encontró '+(pk?pk.nom:'#'+pkm_num),'fbother',2500);
+  }
+  const slot=document.getElementById('slot-'+pkm_num);
+  if(slot){
+    const grid=document.getElementById('poke-grid');
+    const slotTop=slot.offsetTop;
+    const slotBot=slotTop+slot.offsetHeight;
+    const gridScroll=grid.scrollTop;
+    const gridVis=grid.clientHeight;
+    if(slotBot>gridScroll+gridVis){
+      grid.scrollTo({top:slotBot-gridVis,behavior:'smooth'});
+    }else if(slotTop<gridScroll){
+      grid.scrollTo({top:slotTop,behavior:'smooth'});
+    }
+  }
+  if(Object.keys(G.found).length>=G.total) endGame();
+}
+
 function startOnline(code,me){
   ME=me; ROOM=code;
   setupGameUI();
   showScreen('game');buildGrid();updateTurnOnline();renderTimer();
   G.running=true;
-  const seen=new Set();
-  pollInt=setInterval(async()=>{
-    if(!G.running)return;
-    try{
-      // sync found
-      const found=await sb(`sporcle_found?room_code=eq.${code}&select=*&order=found_at.asc`);
-      if(found)found.forEach(r=>{
-        if(!seen.has(r.pkm_num)){seen.add(r.pkm_num);
-          if(!G.found[r.pkm_num]){
-            G.found[r.pkm_num]=r.player;G.scores[r.player]++;
-            markSlot(r.pkm_num,r.player,false);
-            document.getElementById('sc1').textContent=G.scores[1];
-            document.getElementById('sc2').textContent=G.scores[2];
-            updateProgress(Object.keys(G.found).length, G.total);
-            if(r.player!==ME){const pk=PKM.find(p=>p.n===r.pkm_num);showFB('⚡ '+(r.player===1?G.p1:G.p2)+' encontró '+(pk?pk.nom:'#'+r.pkm_num),'fbother',2000);}
-          }}});
-      // sync room
-      const rm=await sb(`sporcle_rooms?code=eq.${code}&select=time_left,cur_player,status`);
-      if(rm&&rm[0]){
-        if(ME===2){G.timeLeft=rm[0].time_left;renderTimer();}
-        if(rm[0].cur_player!==G.cur){G.cur=rm[0].cur_player;updateTurnOnline();}
-        if(rm[0].status==='ended'&&G.running){G.running=false;clearInterval(pollInt);endGame();}
-      }
-    }catch(e){}
-  },1200);
+
+  // ── Realtime: sporcle_found → aparece al instante en los dos lados ──
+  subscribeRealtime(
+    `realtime:public:sporcle_found:room_code=eq.${code}`,
+    (evt, record) => {
+      if(evt==='INSERT' && record) applyRemoteFind(record.pkm_num, record.player);
+    }
+  );
+
+  // ── Realtime: sporcle_rooms → turno, timer, estado ──
+  subscribeRealtime(
+    `realtime:public:sporcle_rooms:code=eq.${code}`,
+    (evt, record) => {
+      if(!record) return;
+      if(ME===2 && record.time_left!==undefined){ G.timeLeft=record.time_left; renderTimer(); }
+      if(record.cur_player!==undefined && record.cur_player!==G.cur){ G.cur=record.cur_player; updateTurnOnline(); }
+      if(record.status==='ended' && G.running){ G.running=false; endGame(); }
+    }
+  );
   // host runs timer
   if(me===1){
     tInt=setInterval(async()=>{
@@ -860,32 +884,14 @@ function trySubmit(){
 }
 async function doFind(pk){
   const pl=G.cur;
-  G.found[pk.n]=pl;G.scores[pl]++;
-  document.getElementById('sc1').textContent=G.scores[1];
-  document.getElementById('sc2').textContent=G.scores[2];
-  const tot=Object.keys(G.found).length;
-  updateProgress(tot, G.total);
-  markSlot(pk.n,pl,true);
   flashIn('fok');
   document.getElementById('poke-input').value='';
   showFB('✓ '+pk.nom+' (#'+pk.n+')','fbok');
-  const slot=document.getElementById('slot-'+pk.n);
-  if(slot){
-    const grid=document.getElementById('poke-grid');
-    const slotTop=slot.offsetTop;
-    const slotBot=slotTop+slot.offsetHeight;
-    const gridScroll=grid.scrollTop;
-    const gridVis=grid.clientHeight;
-    if(slotBot>gridScroll+gridVis){
-      grid.scrollTo({top:slotBot-gridVis,behavior:'smooth'});
-    }else if(slotTop<gridScroll){
-      grid.scrollTo({top:slotTop,behavior:'smooth'});
-    }
+  if(MODE==='local'){
+    applyRemoteFind(pk.n, pl);
+  } else {
+    try{await sb('sporcle_found',{method:'POST',prefer:'return=minimal',body:{room_code:ROOM,pkm_num:pk.n,player:pl,pkm_name:pk.nom}});}catch(e){console.warn('sync error',e);}
   }
-  if(MODE!=='local'){
-    try{await sb('sporcle_found',{method:'POST',prefer:'return=minimal',body:{room_code:ROOM,pkm_num:pk.n,player:pl,pkm_name:pk.nom}});}catch(e){}
-  }
-  if(tot>=G.total)endGame();
 }
 
 // ─ grid ─
