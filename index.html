@@ -459,11 +459,17 @@ async function sb(path,o={}){
 // ── Supabase Realtime via WebSocket ──
 let rtWS=null, rtSubs={};
 function subscribeRealtime(topic, cb){
-  if(!rtWS || rtWS.readyState>1) openRealtimeWS();
+  // topic format: "realtime:public:TABLE:FILTER"
+  const parts=topic.replace('realtime:public:','').split(':');
+  const table=parts[0];
+  const filter=parts[1]||undefined;
   rtSubs[topic]=cb;
-  const send=()=>rtWS.send(JSON.stringify({topic,event:'phx_join',payload:{config:{broadcast:{self:false},presence:{key:''}}},ref:topic}));
-  if(rtWS.readyState===1) send();
-  else rtWS.addEventListener('open',send,{once:true});
+  if(!rtWS || rtWS.readyState>1){
+    openRealtimeWS();
+    rtWS.addEventListener('open',()=>sendJoin(topic,table,filter),{once:false});
+  } else {
+    sendJoin(topic,table,filter);
+  }
 }
 function openRealtimeWS(){
   const url=SB.replace('https','wss')+'/realtime/v1/websocket?apikey='+SK+'&vsn=1.0.0';
@@ -471,17 +477,45 @@ function openRealtimeWS(){
   rtWS.onopen=()=>{
     rtWS.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'}));
     setInterval(()=>{if(rtWS.readyState===1)rtWS.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'}));},25000);
+    // Re-join all pending subs after reconnect
+    Object.keys(rtSubs).forEach(topic=>{
+      const [,schema,table,filter]=topic.replace('realtime:','').split(':').reduce((a,p,i)=>{
+        if(i===0)a[1]=p;
+        else if(i===1)a[2]=p;
+        else a[3]=p;
+        return a;
+      },[null,null,null,null]);
+      sendJoin(topic,table,filter);
+    });
   };
   rtWS.onmessage=e=>{
     const d=JSON.parse(e.data);
     if(!d.topic||!d.payload) return;
     const cb=rtSubs[d.topic];
-    if(cb && (d.event==='INSERT'||d.event==='UPDATE')){
-      cb(d.event, d.payload.record||d.payload.new);
-    }
+    if(!cb) return;
+    const inner=d.payload.data;
+    if(!inner) return;
+    const evt=inner.type; // INSERT | UPDATE | DELETE
+    const record=inner.record;
+    if((evt==='INSERT'||evt==='UPDATE') && record) cb(evt,record);
   };
   rtWS.onerror=err=>console.warn('RT error',err);
   rtWS.onclose=()=>{ if(G.running) setTimeout(openRealtimeWS,2000); };
+}
+
+function sendJoin(topic, table, filter){
+  const payload={
+    config:{
+      broadcast:{self:true},
+      postgres_changes:[{
+        event:'*',
+        schema:'public',
+        table: table,
+        filter: filter||undefined
+      }]
+    }
+  };
+  rtWS.send(JSON.stringify({topic,event:'phx_join',payload,ref:topic}));
 }
 function closeRealtime(){
   rtSubs={};
