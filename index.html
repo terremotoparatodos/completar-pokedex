@@ -736,7 +736,7 @@ async function onStart(){
   NM={};
   PKM.forEach(p=>{NM[norm(p.nom)]=p;});
   Object.entries(ALIASES).forEach(([k,v])=>{const f=PKM.find(p=>p.nom===v);if(f)NM[norm(k)]=f;});
-  G={p1,p2,region:SEL,scores:{1:0,2:0},found:{},cur:1,timeLeft:1200,running:false,total:REGIONS[SEL].total};
+  G={p1,p2,region:SEL,scores:{1:0,2:0},found:{},cur:1,timeLeft:1800,running:false,total:REGIONS[SEL].total};
   document.getElementById('cam1-label').textContent=p1.toLowerCase();
   document.getElementById('cam2-label').textContent=p2.toLowerCase();
   if(MODE==='local') startLocal();
@@ -754,7 +754,7 @@ function startLocal(){
   document.getElementById('sub-btn').disabled=false;
   showScreen('game');buildGrid();updateTurn();renderTimer();
   G.running=true;
-  tInt=setInterval(()=>{G.timeLeft--;renderTimer();if(G.timeLeft<=0)endGame();},1000);
+  tInt=setInterval(()=>{if(!G.running)return;G.timeLeft--;renderTimer();if(G.timeLeft<=0){clearInterval(tInt);endGame();}},1000);
   setTimeout(()=>document.getElementById('poke-input').focus(),80);
 }
 
@@ -831,14 +831,15 @@ function applyRemoteFind(pkm_num, player){
   if(slot){
     const grid=document.getElementById('poke-grid');
     const slotTop=slot.offsetTop;
-    const slotBot=slotTop+slot.offsetHeight;
     const slotH=slot.offsetHeight;
     const gridScroll=grid.scrollTop;
     const gridVis=grid.clientHeight;
-    if(slotBot>gridScroll+gridVis){
-      grid.scrollTo({top:slotBot-gridVis,behavior:'smooth'});
-    }else if(slotTop<gridScroll){
-      grid.scrollTo({top:Math.max(0,slotTop-slotH),behavior:'smooth'});
+    const gridTotal=grid.scrollHeight;
+    // Center the slot vertically in the visible grid area
+    const targetCenter=slotTop-(gridVis/2)+(slotH/2);
+    const clamped=Math.max(0,Math.min(targetCenter,gridTotal-gridVis));
+    if(Math.abs(clamped-gridScroll)>slotH*0.5){
+      grid.scrollTo({top:clamped,behavior:'smooth'});
     }
   }
   if(Object.keys(G.found).length>=G.total) endGame();
@@ -870,13 +871,22 @@ function startOnline(code,me){
     }
   );
   // Both sides run their own timer; host syncs to DB every 5s as source of truth
-  tInt=setInterval(async()=>{
-    G.timeLeft--;renderTimer();
-    if(me===1){
-      if(G.timeLeft%5===0){try{await sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{time_left:G.timeLeft}});}catch(e){}}
-      if(G.timeLeft<=0){clearInterval(tInt);try{await sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{status:'ended',time_left:0}});}catch(e){}endGame();}
-    } else {
-      if(G.timeLeft<=0){clearInterval(tInt);endGame();}
+  // Timer: pure sync tick, no async inside setInterval
+  tInt=setInterval(()=>{
+    if(!G.running)return;
+    G.timeLeft--;
+    renderTimer();
+    if(G.timeLeft<=0){
+      clearInterval(tInt);
+      if(me===1){
+        sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{status:'ended',time_left:0}}).catch(()=>{});
+      }
+      endGame();
+      return;
+    }
+    // Host syncs to DB every 5s — fire-and-forget, never awaited
+    if(me===1 && G.timeLeft%5===0){
+      sb(`sporcle_rooms?code=eq.${code}`,{method:'PATCH',prefer:'return=minimal',body:{time_left:G.timeLeft}}).catch(()=>{});
     }
   },1000);
   setTimeout(()=>{if(G.cur===ME)document.getElementById('poke-input').focus();},80);
@@ -886,8 +896,8 @@ function startOnline(code,me){
 function updateTurn(){
   const dot=document.getElementById('tdot'),tn=document.getElementById('tname');
   if(!G.p2||G.p2===''){dot.className='tdot dots-solo';tn.textContent=G.p1;tn.className='tname tnsolo';}
-  else if(G.cur===1){dot.className='tdot dot1';tn.textContent=G.p1;tn.className='tname tn1';document.getElementById('poke-input').style.borderColor='var(--p1bd)';}
-  else{dot.className='tdot dot2';tn.textContent=G.p2;tn.className='tname tn2';document.getElementById('poke-input').style.borderColor='var(--p2bd)';}
+  else if(G.cur===1){dot.className='tdot dot1';tn.textContent=G.p1;tn.className='tname tn1';}
+  else{dot.className='tdot dot2';tn.textContent=G.p2;tn.className='tname tn2';}
 }
 function updateTurnOnline(){
   updateTurn();
@@ -899,14 +909,14 @@ function updateTurnOnline(){
   document.getElementById('poke-input').disabled=!mine;
   document.getElementById('sub-btn').disabled=!mine;
   document.getElementById('poke-input').placeholder=mine?'Escribí un Pokémon...':'Esperando a '+(G.cur===1?G.p1:G.p2)+'...';
-  if(mine)setTimeout(()=>document.getElementById('poke-input').focus(),50);
+
 }
 async function switchPlayer(){
   G.cur=G.cur===1?2:1;
   if(MODE==='local'){updateTurn();showFB('🔄 Turno de '+(G.cur===1?G.p1:G.p2),'fbinfo',900);playSound('switch');}
   else{updateTurnOnline();try{await sb(`sporcle_rooms?code=eq.${ROOM}`,{method:'PATCH',prefer:'return=minimal',body:{cur_player:G.cur}});}catch(e){}}
-  document.getElementById('poke-input').focus();
 }
+
 
 // ─ input ─
 
