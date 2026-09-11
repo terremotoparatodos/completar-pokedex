@@ -845,7 +845,7 @@ async function onStart(){
   NM={};
   PKM.forEach(p=>{NM[norm(p.nom)]=p;});
   Object.entries(ALIASES).forEach(([k,v])=>{const f=PKM.find(p=>p.nom===v);if(f)NM[norm(k)]=f;});
-  G={p1,p2,region:SEL,scores:{1:0,2:0},found:{},cur:1,timeLeft:2400,running:false,total:REGIONS[SEL].total};
+  G={p1,p2,region:SEL,scores:{1:0,2:0},found:{},cur:1,timeLeft:2700,running:false,total:REGIONS[SEL].total};
   document.getElementById('cam1-label').textContent=p1.toLowerCase();
   document.getElementById('cam2-label').textContent=p2.toLowerCase();
   if(MODE==='local') startLocal();
