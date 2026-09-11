@@ -27,7 +27,7 @@ html,body{min-height:100vh;background:var(--bg);color:#fff;font-family:'Press St
 svg.pokeball{width:60px;height:60px;display:block;margin:0 auto 14px;animation:spinp 4s infinite}
 @keyframes spinp{0%,70%{transform:rotate(0deg)}85%{transform:rotate(180deg)}100%{transform:rotate(180deg)}}
 
-.region-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;max-width:460px}
+.region-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:600px}
 .reg-btn{background:var(--purbg);border:2px solid var(--purbd);border-radius:10px;padding:12px;cursor:pointer;text-align:center;color:var(--pur);font-family:'Press Start 2P',monospace;transition:.15s}
 .reg-btn:hover{background:#2d2a5e}
 .reg-btn.sel{border-color:var(--gold);background:#1a1500;color:var(--gold)}
@@ -35,7 +35,7 @@ svg.pokeball{width:60px;height:60px;display:block;margin:0 auto 14px;animation:s
 .reg-range{font-size:7px;color:var(--mut);display:block}
 .reg-btn.sel .reg-range{color:#a38200}
 
-.players-wrap{width:100%;max-width:460px}
+.players-wrap{width:100%;max-width:600px}
 .sec-title{font-size:8px;color:var(--mut);letter-spacing:3px;margin-bottom:12px;text-align:center}
 .player-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .player-col{display:flex;flex-direction:column;gap:6px}
@@ -45,11 +45,11 @@ svg.pokeball{width:60px;height:60px;display:block;margin:0 auto 14px;animation:s
 .pinput:focus{border-color:var(--purbd)}
 #pi1:focus{border-color:var(--p1bd)}#pi2:focus{border-color:var(--p2bd)}
 
-.mode-tabs{display:flex;gap:8px;width:100%;max-width:460px}
+.mode-tabs{display:flex;gap:8px;width:100%;max-width:600px}
 .mtab{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:8px;padding:9px 6px;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:7px;color:var(--mut);text-align:center;transition:.15s;line-height:2}
 .mtab:hover{background:var(--bg3)}
 .mtab.sel{border-color:var(--gold);color:var(--gold);background:#1a1500}
-.mode-panel{display:none;width:100%;max-width:460px;flex-direction:column;gap:8px}
+.mode-panel{display:none;width:100%;max-width:600px;flex-direction:column;gap:8px}
 .mode-panel.active{display:flex}
 .code-input{background:var(--bg3);border:1px solid var(--bdr2);border-radius:6px;padding:10px;color:#fff;font-size:22px;font-family:'Press Start 2P',monospace;outline:none;width:100%;text-align:center;letter-spacing:6px;text-transform:uppercase;transition:border-color .2s}
 .code-input:focus{border-color:var(--gold)}
@@ -150,9 +150,7 @@ svg.pokeball{width:60px;height:60px;display:block;margin:0 auto 14px;animation:s
 .fbdup{background:#1c1300;color:var(--warn)}.fbinfo{background:var(--bg2);color:var(--mut)}
 .fbempty{background:var(--bg)}.fbother{background:#0c1030;color:#93c5fd}
 /* online turn banner */
-.turn-banner{text-align:center;padding:4px;font-size:7px;letter-spacing:2px;flex-shrink:0}
-.turn-banner.on{background:var(--grn);color:#052e16}
-.turn-banner.off{background:#1a1a1a;color:var(--mut);display:none}
+.turn-banner{display:none!important}
 
 /* ── POKEMON GRID — 10 per row, scrollable — height = exactly 3 rows ── */
 .poke-grid{
@@ -299,13 +297,15 @@ svg.pokeball{width:60px;height:60px;display:block;margin:0 auto 14px;animation:s
   <div class="logo-title">NOMBRÁ EL<br>POKÉMON</div>
   <div class="logo-sub">20 MINUTOS · GEN 1–4</div>
 
-  <div style="width:100%;max-width:460px">
+  <div style="width:100%;max-width:600px">
     <div class="sec-title">REGIÓN</div>
     <div class="region-grid">
       <button class="reg-btn" data-gen="1"><span class="reg-name">◆ KANTO</span><span class="reg-range">Gen 1 · #001–151 · 151 pkm</span></button>
       <button class="reg-btn" data-gen="2"><span class="reg-name">◆ JOHTO</span><span class="reg-range">Gen 2 · #152–251 · 100 pkm</span></button>
       <button class="reg-btn" data-gen="3"><span class="reg-name">◆ HOENN</span><span class="reg-range">Gen 3 · #252–386 · 135 pkm</span></button>
       <button class="reg-btn" data-gen="4"><span class="reg-name">◆ SINNOH</span><span class="reg-range">Gen 4 · #387–493 · 107 pkm</span></button>
+      <button class="reg-btn" data-gen="5"><span class="reg-name">◆ UNOVA</span><span class="reg-range">Gen 5 · #494–649 · 156 pkm</span></button>
+      <button class="reg-btn" data-gen="6"><span class="reg-name">◆ KALOS</span><span class="reg-range">Gen 6 · #650–721 · 72 pkm</span></button>
     </div>
   </div>
 
@@ -324,7 +324,7 @@ svg.pokeball{width:60px;height:60px;display:block;margin:0 auto 14px;animation:s
     </div>
   </div>
 
-  <div style="width:100%;max-width:460px">
+  <div style="width:100%;max-width:600px">
     <div class="sec-title">MODO</div>
     <div class="mode-tabs">
       <button class="mtab sel" id="tab-local">🖥️ LOCAL<br>misma compu</button>
@@ -522,7 +522,7 @@ function closeRealtime(){
   if(rtWS){ rtWS.onclose=null; rtWS.close(); rtWS=null; }
 }
 
-const REGIONS={1:{name:'Kanto',total:151},2:{name:'Johto',total:100},3:{name:'Hoenn',total:135},4:{name:'Sinnoh',total:107}};
+const REGIONS={1:{name:'Kanto',total:151},2:{name:'Johto',total:100},3:{name:'Hoenn',total:135},4:{name:'Sinnoh',total:107},5:{name:'Unova',total:156},6:{name:'Kalos',total:72}};
 
 const ALL=[
   {n:1,nom:"Bulbasaur",g:1},{n:2,nom:"Ivysaur",g:1},{n:3,nom:"Venusaur",g:1},
@@ -682,6 +682,115 @@ const ALL=[
   {n:486,nom:"Regigigas",g:4},{n:487,nom:"Giratina",g:4},{n:488,nom:"Cresselia",g:4},
   {n:489,nom:"Phione",g:4},{n:490,nom:"Manaphy",g:4},{n:491,nom:"Darkrai",g:4},
   {n:492,nom:"Shaymin",g:4},{n:493,nom:"Arceus",g:4}
+,
+  // Gen 5 — Unova
+  {n:494,nom:"Victini",g:5},{n:495,nom:"Snivy",g:5},{n:496,nom:"Servine",g:5},{n:497,nom:"Serperior",g:5},
+  {n:498,nom:"Tepig",g:5},{n:499,nom:"Pignite",g:5},{n:500,nom:"Emboar",g:5},
+  {n:501,nom:"Oshawott",g:5},{n:502,nom:"Dewott",g:5},{n:503,nom:"Samurott",g:5},
+  {n:504,nom:"Patrat",g:5},{n:505,nom:"Watchog",g:5},
+  {n:506,nom:"Lillipup",g:5},{n:507,nom:"Herdier",g:5},{n:508,nom:"Stoutland",g:5},
+  {n:509,nom:"Purrloin",g:5},{n:510,nom:"Liepard",g:5},
+  {n:511,nom:"Pansage",g:5},{n:512,nom:"Simisage",g:5},
+  {n:513,nom:"Pansear",g:5},{n:514,nom:"Simisear",g:5},
+  {n:515,nom:"Panpour",g:5},{n:516,nom:"Simipour",g:5},
+  {n:517,nom:"Munna",g:5},{n:518,nom:"Musharna",g:5},
+  {n:519,nom:"Pidove",g:5},{n:520,nom:"Tranquill",g:5},{n:521,nom:"Unfezant",g:5},
+  {n:522,nom:"Blitzle",g:5},{n:523,nom:"Zebstrika",g:5},
+  {n:524,nom:"Roggenrola",g:5},{n:525,nom:"Boldore",g:5},{n:526,nom:"Gigalith",g:5},
+  {n:527,nom:"Woobat",g:5},{n:528,nom:"Swoobat",g:5},
+  {n:529,nom:"Drilbur",g:5},{n:530,nom:"Excadrill",g:5},
+  {n:531,nom:"Audino",g:5},
+  {n:532,nom:"Timburr",g:5},{n:533,nom:"Gurdurr",g:5},{n:534,nom:"Conkeldurr",g:5},
+  {n:535,nom:"Tympole",g:5},{n:536,nom:"Palpitoad",g:5},{n:537,nom:"Seismitoad",g:5},
+  {n:538,nom:"Throh",g:5},{n:539,nom:"Sawk",g:5},
+  {n:540,nom:"Sewaddle",g:5},{n:541,nom:"Swadloon",g:5},{n:542,nom:"Leavanny",g:5},
+  {n:543,nom:"Venipede",g:5},{n:544,nom:"Whirlipede",g:5},{n:545,nom:"Scolipede",g:5},
+  {n:546,nom:"Cottonee",g:5},{n:547,nom:"Whimsicott",g:5},
+  {n:548,nom:"Petilil",g:5},{n:549,nom:"Lilligant",g:5},
+  {n:550,nom:"Basculin",g:5},
+  {n:551,nom:"Sandile",g:5},{n:552,nom:"Krokorok",g:5},{n:553,nom:"Krookodile",g:5},
+  {n:554,nom:"Darumaka",g:5},{n:555,nom:"Darmanitan",g:5},
+  {n:556,nom:"Maractus",g:5},
+  {n:557,nom:"Dwebble",g:5},{n:558,nom:"Crustle",g:5},
+  {n:559,nom:"Scraggy",g:5},{n:560,nom:"Scrafty",g:5},
+  {n:561,nom:"Sigilyph",g:5},
+  {n:562,nom:"Yamask",g:5},{n:563,nom:"Cofagrigus",g:5},
+  {n:564,nom:"Tirtouga",g:5},{n:565,nom:"Carracosta",g:5},
+  {n:566,nom:"Archen",g:5},{n:567,nom:"Archeops",g:5},
+  {n:568,nom:"Trubbish",g:5},{n:569,nom:"Garbodor",g:5},
+  {n:570,nom:"Zorua",g:5},{n:571,nom:"Zoroark",g:5},
+  {n:572,nom:"Minccino",g:5},{n:573,nom:"Cinccino",g:5},
+  {n:574,nom:"Gothita",g:5},{n:575,nom:"Gothorita",g:5},{n:576,nom:"Gothitelle",g:5},
+  {n:577,nom:"Solosis",g:5},{n:578,nom:"Duosion",g:5},{n:579,nom:"Reuniclus",g:5},
+  {n:580,nom:"Ducklett",g:5},{n:581,nom:"Swanna",g:5},
+  {n:582,nom:"Vanillite",g:5},{n:583,nom:"Vanillish",g:5},{n:584,nom:"Vanilluxe",g:5},
+  {n:585,nom:"Deerling",g:5},{n:586,nom:"Sawsbuck",g:5},
+  {n:587,nom:"Emolga",g:5},
+  {n:588,nom:"Karrablast",g:5},{n:589,nom:"Escavalier",g:5},
+  {n:590,nom:"Foongus",g:5},{n:591,nom:"Amoonguss",g:5},
+  {n:592,nom:"Frillish",g:5},{n:593,nom:"Jellicent",g:5},
+  {n:594,nom:"Alomomola",g:5},
+  {n:595,nom:"Joltik",g:5},{n:596,nom:"Galvantula",g:5},
+  {n:597,nom:"Ferroseed",g:5},{n:598,nom:"Ferrothorn",g:5},
+  {n:599,nom:"Klink",g:5},{n:600,nom:"Klang",g:5},{n:601,nom:"Klinklang",g:5},
+  {n:602,nom:"Tynamo",g:5},{n:603,nom:"Eelektrik",g:5},{n:604,nom:"Eelektross",g:5},
+  {n:605,nom:"Elgyem",g:5},{n:606,nom:"Beheeyem",g:5},
+  {n:607,nom:"Litwick",g:5},{n:608,nom:"Lampent",g:5},{n:609,nom:"Chandelure",g:5},
+  {n:610,nom:"Axew",g:5},{n:611,nom:"Fraxure",g:5},{n:612,nom:"Haxorus",g:5},
+  {n:613,nom:"Cubchoo",g:5},{n:614,nom:"Beartic",g:5},
+  {n:615,nom:"Cryogonal",g:5},
+  {n:616,nom:"Shelmet",g:5},{n:617,nom:"Accelgor",g:5},
+  {n:618,nom:"Stunfisk",g:5},
+  {n:619,nom:"Mienfoo",g:5},{n:620,nom:"Mienshao",g:5},
+  {n:621,nom:"Druddigon",g:5},
+  {n:622,nom:"Golett",g:5},{n:623,nom:"Golurk",g:5},
+  {n:624,nom:"Pawniard",g:5},{n:625,nom:"Bisharp",g:5},
+  {n:626,nom:"Bouffalant",g:5},
+  {n:627,nom:"Rufflet",g:5},{n:628,nom:"Braviary",g:5},
+  {n:629,nom:"Vullaby",g:5},{n:630,nom:"Mandibuzz",g:5},
+  {n:631,nom:"Heatmor",g:5},{n:632,nom:"Durant",g:5},
+  {n:633,nom:"Deino",g:5},{n:634,nom:"Zweilous",g:5},{n:635,nom:"Hydreigon",g:5},
+  {n:636,nom:"Larvesta",g:5},{n:637,nom:"Volcarona",g:5},
+  {n:638,nom:"Cobalion",g:5},{n:639,nom:"Terrakion",g:5},{n:640,nom:"Virizion",g:5},
+  {n:641,nom:"Tornadus",g:5},{n:642,nom:"Thundurus",g:5},
+  {n:643,nom:"Reshiram",g:5},{n:644,nom:"Zekrom",g:5},
+  {n:645,nom:"Landorus",g:5},{n:646,nom:"Kyurem",g:5},
+  {n:647,nom:"Keldeo",g:5},{n:648,nom:"Meloetta",g:5},{n:649,nom:"Genesect",g:5},
+  // Gen 6 — Kalos
+  {n:650,nom:"Chespin",g:6},{n:651,nom:"Quilladin",g:6},{n:652,nom:"Chesnaught",g:6},
+  {n:653,nom:"Fennekin",g:6},{n:654,nom:"Braixen",g:6},{n:655,nom:"Delphox",g:6},
+  {n:656,nom:"Froakie",g:6},{n:657,nom:"Frogadier",g:6},{n:658,nom:"Greninja",g:6},
+  {n:659,nom:"Bunnelby",g:6},{n:660,nom:"Diggersby",g:6},
+  {n:661,nom:"Fletchling",g:6},{n:662,nom:"Fletchinder",g:6},{n:663,nom:"Talonflame",g:6},
+  {n:664,nom:"Scatterbug",g:6},{n:665,nom:"Spewpa",g:6},{n:666,nom:"Vivillon",g:6},
+  {n:667,nom:"Litleo",g:6},{n:668,nom:"Pyroar",g:6},
+  {n:669,nom:"Flabébé",g:6},{n:670,nom:"Floette",g:6},{n:671,nom:"Florges",g:6},
+  {n:672,nom:"Skiddo",g:6},{n:673,nom:"Gogoat",g:6},
+  {n:674,nom:"Pancham",g:6},{n:675,nom:"Pangoro",g:6},
+  {n:676,nom:"Furfrou",g:6},
+  {n:677,nom:"Espurr",g:6},{n:678,nom:"Meowstic",g:6},
+  {n:679,nom:"Honedge",g:6},{n:680,nom:"Doublade",g:6},{n:681,nom:"Aegislash",g:6},
+  {n:682,nom:"Spritzee",g:6},{n:683,nom:"Aromatisse",g:6},
+  {n:684,nom:"Swirlix",g:6},{n:685,nom:"Slurpuff",g:6},
+  {n:686,nom:"Inkay",g:6},{n:687,nom:"Malamar",g:6},
+  {n:688,nom:"Binacle",g:6},{n:689,nom:"Barbaracle",g:6},
+  {n:690,nom:"Skrelp",g:6},{n:691,nom:"Dragalge",g:6},
+  {n:692,nom:"Clauncher",g:6},{n:693,nom:"Clawitzer",g:6},
+  {n:694,nom:"Helioptile",g:6},{n:695,nom:"Heliolisk",g:6},
+  {n:696,nom:"Tyrunt",g:6},{n:697,nom:"Tyrantrum",g:6},
+  {n:698,nom:"Amaura",g:6},{n:699,nom:"Aurorus",g:6},
+  {n:700,nom:"Sylveon",g:6},
+  {n:701,nom:"Hawlucha",g:6},
+  {n:702,nom:"Dedenne",g:6},
+  {n:703,nom:"Carbink",g:6},
+  {n:704,nom:"Goomy",g:6},{n:705,nom:"Sliggoo",g:6},{n:706,nom:"Goodra",g:6},
+  {n:707,nom:"Klefki",g:6},
+  {n:708,nom:"Phantump",g:6},{n:709,nom:"Trevenant",g:6},
+  {n:710,nom:"Pumpkaboo",g:6},{n:711,nom:"Gourgeist",g:6},
+  {n:712,nom:"Bergmite",g:6},{n:713,nom:"Avalugg",g:6},
+  {n:714,nom:"Noibat",g:6},{n:715,nom:"Noivern",g:6},
+  {n:716,nom:"Xerneas",g:6},{n:717,nom:"Yveltal",g:6},{n:718,nom:"Zygarde",g:6},
+  {n:719,nom:"Diancie",g:6},{n:720,nom:"Hoopa",g:6},{n:721,nom:"Volcanion",g:6}
 ];
 
 const ALIASES={
@@ -692,7 +801,7 @@ const ALIASES={
   "mime jr":"Mime Jr.","mimejr":"Mime Jr.",
   "ho oh":"Ho-oh","hooh":"Ho-oh",
   "porygon z":"Porygon-Z","porygonz":"Porygon-Z",
-  "porygon 2":"Porygon2",
+  "porygon 2":"Porygon2","flabebe":"Flabébé","flabebe":"Flabébé",
 };
 
 function norm(s){
@@ -702,7 +811,7 @@ function norm(s){
     .replace(/♀/g,"f").replace(/♂/g,"m");
 }
 
-function sprURL(n){return`https://raw.githubusercontent.com/terremotoparatodos/sprites-overworld/master/down/${String(n).padStart(4,'0')}.png`;}
+function sprURL(n){return`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${n}.png`;}
 
 // ─ state ─
 let G={},MODE='local',SEL=0,ROOM=null,ME=1;
@@ -736,7 +845,7 @@ async function onStart(){
   NM={};
   PKM.forEach(p=>{NM[norm(p.nom)]=p;});
   Object.entries(ALIASES).forEach(([k,v])=>{const f=PKM.find(p=>p.nom===v);if(f)NM[norm(k)]=f;});
-  G={p1,p2,region:SEL,scores:{1:0,2:0},found:{},cur:1,timeLeft:1800,running:false,total:REGIONS[SEL].total};
+  G={p1,p2,region:SEL,scores:{1:0,2:0},found:{},cur:1,timeLeft:2400,running:false,total:REGIONS[SEL].total};
   document.getElementById('cam1-label').textContent=p1.toLowerCase();
   document.getElementById('cam2-label').textContent=p2.toLowerCase();
   if(MODE==='local') startLocal();
@@ -813,35 +922,42 @@ async function joinRoom(code,myName){
 }
 
 // ─ online game ─
+function scrollToSlot(pkm_num){
+  // Wait one frame so the DOM paint from markSlot is done
+  requestAnimationFrame(()=>{
+    const slot=document.getElementById('slot-'+pkm_num);
+    const grid=document.getElementById('poke-grid');
+    if(!slot||!grid) return;
+    // getBoundingClientRect gives viewport-relative coords — always accurate
+    const slotRect=slot.getBoundingClientRect();
+    const gridRect=grid.getBoundingClientRect();
+    // Convert to scroll-relative position inside the grid
+    const slotTopInGrid=(slotRect.top-gridRect.top)+grid.scrollTop;
+    const slotH=slotRect.height;
+    const gridVis=grid.clientHeight;
+    const gridTotal=grid.scrollHeight;
+    // Center the slot in the visible area
+    const target=slotTopInGrid-(gridVis/2)+(slotH/2);
+    const clamped=Math.max(0,Math.min(target,gridTotal-gridVis));
+    grid.scrollTo({top:clamped,behavior:'smooth'});
+  });
+}
+
 function applyRemoteFind(pkm_num, player){
-  if(G.found[pkm_num]) return; // already applied locally or by Realtime
+  if(G.found[pkm_num]) return;
   G.found[pkm_num]=player;
   G.scores[player]++;
   markSlot(pkm_num, player, true);
   document.getElementById('sc1').textContent=G.scores[1];
   document.getElementById('sc2').textContent=G.scores[2];
   updateProgress(Object.keys(G.found).length, G.total);
-  // scroll + feedback en AMBOS lados
   const pk=PKM.find(p=>p.n===pkm_num);
   const who=player===1?G.p1:G.p2;
   if(player!==ME){
-    showFB('⚡ '+who+' encontró '+(pk?pk.nom:'#'+pkm_num),'fbother',2500);playSound('other');
+    showFB('⚡ '+who+' encontró '+(pk?pk.nom:'#'+pkm_num),'fbother',2500);
+    playSound('other');
   }
-  const slot=document.getElementById('slot-'+pkm_num);
-  if(slot){
-    const grid=document.getElementById('poke-grid');
-    const slotTop=slot.offsetTop;
-    const slotH=slot.offsetHeight;
-    const gridScroll=grid.scrollTop;
-    const gridVis=grid.clientHeight;
-    const gridTotal=grid.scrollHeight;
-    // Center the slot vertically in the visible grid area
-    const targetCenter=slotTop-(gridVis/2)+(slotH/2);
-    const clamped=Math.max(0,Math.min(targetCenter,gridTotal-gridVis));
-    if(Math.abs(clamped-gridScroll)>slotH*0.5){
-      grid.scrollTo({top:clamped,behavior:'smooth'});
-    }
-  }
+  scrollToSlot(pkm_num);
   if(Object.keys(G.found).length>=G.total) endGame();
 }
 
