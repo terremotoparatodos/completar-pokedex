@@ -295,7 +295,7 @@ svg.pokeball{width:60px;height:60px;display:block;margin:0 auto 14px;animation:s
     <circle cx="32" cy="32" r="6" fill="#1a1a2e"/><circle cx="32" cy="32" r="4" fill="#fff"/>
   </svg>
   <div class="logo-title">NOMBRÁ EL<br>POKÉMON</div>
-  <div class="logo-sub">20 MINUTOS · GEN 1–4</div>
+  <div class="logo-sub">20 MINUTOS · GEN 1–8</div>
 
   <div style="width:100%;max-width:600px">
     <div class="sec-title">REGIÓN</div>
@@ -306,6 +306,8 @@ svg.pokeball{width:60px;height:60px;display:block;margin:0 auto 14px;animation:s
       <button class="reg-btn" data-gen="4"><span class="reg-name">◆ SINNOH</span><span class="reg-range">Gen 4 · #387–493 · 107 pkm</span></button>
       <button class="reg-btn" data-gen="5"><span class="reg-name">◆ UNOVA</span><span class="reg-range">Gen 5 · #494–649 · 156 pkm</span></button>
       <button class="reg-btn" data-gen="6"><span class="reg-name">◆ KALOS</span><span class="reg-range">Gen 6 · #650–721 · 72 pkm</span></button>
+      <button class="reg-btn" data-gen="7"><span class="reg-name">◆ ALOLA</span><span class="reg-range">Gen 7 · #722–809 · 88 pkm</span></button>
+      <button class="reg-btn" data-gen="8"><span class="reg-name">◆ GALAR</span><span class="reg-range">Gen 8 · #810–898 · 89 pkm</span></button>
     </div>
   </div>
 
@@ -467,7 +469,7 @@ function subscribeRealtime(topic, cb){
   if(!rtWS || rtWS.readyState>1){
     openRealtimeWS();
     rtWS.addEventListener('open',()=>sendJoin(topic,table,filter),{once:false});
-  } else {
+  } else if(rtWS.readyState===1) {
     sendJoin(topic,table,filter);
   }
 }
@@ -522,7 +524,7 @@ function closeRealtime(){
   if(rtWS){ rtWS.onclose=null; rtWS.close(); rtWS=null; }
 }
 
-const REGIONS={1:{name:'Kanto',total:151},2:{name:'Johto',total:100},3:{name:'Hoenn',total:135},4:{name:'Sinnoh',total:107},5:{name:'Unova',total:156},6:{name:'Kalos',total:72}};
+const REGIONS={1:{name:'Kanto',total:151},2:{name:'Johto',total:100},3:{name:'Hoenn',total:135},4:{name:'Sinnoh',total:107},5:{name:'Unova',total:156},6:{name:'Kalos',total:72},7:{name:'Alola',total:88},8:{name:'Galar',total:89}};
 
 const ALL=[
   {n:1,nom:"Bulbasaur",g:1},{n:2,nom:"Ivysaur",g:1},{n:3,nom:"Venusaur",g:1},
@@ -790,7 +792,69 @@ const ALL=[
   {n:712,nom:"Bergmite",g:6},{n:713,nom:"Avalugg",g:6},
   {n:714,nom:"Noibat",g:6},{n:715,nom:"Noivern",g:6},
   {n:716,nom:"Xerneas",g:6},{n:717,nom:"Yveltal",g:6},{n:718,nom:"Zygarde",g:6},
-  {n:719,nom:"Diancie",g:6},{n:720,nom:"Hoopa",g:6},{n:721,nom:"Volcanion",g:6}
+  {n:719,nom:"Diancie",g:6},{n:720,nom:"Hoopa",g:6},{n:721,nom:"Volcanion",g:6},
+  // Gen 7 — Alola
+  {n:722,nom:"Rowlet",g:7},{n:723,nom:"Dartrix",g:7},{n:724,nom:"Decidueye",g:7},
+  {n:725,nom:"Litten",g:7},{n:726,nom:"Torracat",g:7},{n:727,nom:"Incineroar",g:7},
+  {n:728,nom:"Popplio",g:7},{n:729,nom:"Brionne",g:7},{n:730,nom:"Primarina",g:7},
+  {n:731,nom:"Pikipek",g:7},{n:732,nom:"Trumbeak",g:7},{n:733,nom:"Toucannon",g:7},
+  {n:734,nom:"Yungoos",g:7},{n:735,nom:"Gumshoos",g:7},{n:736,nom:"Grubbin",g:7},
+  {n:737,nom:"Charjabug",g:7},{n:738,nom:"Vikavolt",g:7},{n:739,nom:"Crabrawler",g:7},
+  {n:740,nom:"Crabominable",g:7},{n:741,nom:"Oricorio",g:7},{n:742,nom:"Cutiefly",g:7},
+  {n:743,nom:"Ribombee",g:7},{n:744,nom:"Rockruff",g:7},{n:745,nom:"Lycanroc",g:7},
+  {n:746,nom:"Wishiwashi",g:7},{n:747,nom:"Mareanie",g:7},{n:748,nom:"Toxapex",g:7},
+  {n:749,nom:"Mudbray",g:7},{n:750,nom:"Mudsdale",g:7},{n:751,nom:"Dewpider",g:7},
+  {n:752,nom:"Araquanid",g:7},{n:753,nom:"Fomantis",g:7},{n:754,nom:"Lurantis",g:7},
+  {n:755,nom:"Morelull",g:7},{n:756,nom:"Shiinotic",g:7},{n:757,nom:"Salandit",g:7},
+  {n:758,nom:"Salazzle",g:7},{n:759,nom:"Stufful",g:7},{n:760,nom:"Bewear",g:7},
+  {n:761,nom:"Bounsweet",g:7},{n:762,nom:"Steenee",g:7},{n:763,nom:"Tsareena",g:7},
+  {n:764,nom:"Comfey",g:7},{n:765,nom:"Oranguru",g:7},{n:766,nom:"Passimian",g:7},
+  {n:767,nom:"Wimpod",g:7},{n:768,nom:"Golisopod",g:7},{n:769,nom:"Sandygast",g:7},
+  {n:770,nom:"Palossand",g:7},{n:771,nom:"Pyukumuku",g:7},{n:772,nom:"Type: Null",g:7},
+  {n:773,nom:"Silvally",g:7},{n:774,nom:"Minior",g:7},{n:775,nom:"Komala",g:7},
+  {n:776,nom:"Turtonator",g:7},{n:777,nom:"Togedemaru",g:7},{n:778,nom:"Mimikyu",g:7},
+  {n:779,nom:"Bruxish",g:7},{n:780,nom:"Drampa",g:7},{n:781,nom:"Dhelmise",g:7},
+  {n:782,nom:"Jangmo-o",g:7},{n:783,nom:"Hakamo-o",g:7},{n:784,nom:"Kommo-o",g:7},
+  {n:785,nom:"Tapu Koko",g:7},{n:786,nom:"Tapu Lele",g:7},{n:787,nom:"Tapu Bulu",g:7},
+  {n:788,nom:"Tapu Fini",g:7},{n:789,nom:"Cosmog",g:7},{n:790,nom:"Cosmoem",g:7},
+  {n:791,nom:"Solgaleo",g:7},{n:792,nom:"Lunala",g:7},{n:793,nom:"Nihilego",g:7},
+  {n:794,nom:"Buzzwole",g:7},{n:795,nom:"Pheromosa",g:7},{n:796,nom:"Xurkitree",g:7},
+  {n:797,nom:"Celesteela",g:7},{n:798,nom:"Kartana",g:7},{n:799,nom:"Guzzlord",g:7},
+  {n:800,nom:"Necrozma",g:7},{n:801,nom:"Magearna",g:7},{n:802,nom:"Marshadow",g:7},
+  {n:803,nom:"Poipole",g:7},{n:804,nom:"Naganadel",g:7},{n:805,nom:"Stakataka",g:7},
+  {n:806,nom:"Blacephalon",g:7},{n:807,nom:"Zeraora",g:7},{n:808,nom:"Meltan",g:7},
+  {n:809,nom:"Melmetal",g:7},
+  // Gen 8 — Galar
+  {n:810,nom:"Grookey",g:8},{n:811,nom:"Thwackey",g:8},{n:812,nom:"Rillaboom",g:8},
+  {n:813,nom:"Scorbunny",g:8},{n:814,nom:"Raboot",g:8},{n:815,nom:"Cinderace",g:8},
+  {n:816,nom:"Sobble",g:8},{n:817,nom:"Drizzile",g:8},{n:818,nom:"Inteleon",g:8},
+  {n:819,nom:"Skwovet",g:8},{n:820,nom:"Greedent",g:8},{n:821,nom:"Rookidee",g:8},
+  {n:822,nom:"Corvisquire",g:8},{n:823,nom:"Corviknight",g:8},{n:824,nom:"Blipbug",g:8},
+  {n:825,nom:"Dottler",g:8},{n:826,nom:"Orbeetle",g:8},{n:827,nom:"Nickit",g:8},
+  {n:828,nom:"Thievul",g:8},{n:829,nom:"Gossifleur",g:8},{n:830,nom:"Eldegoss",g:8},
+  {n:831,nom:"Wooloo",g:8},{n:832,nom:"Dubwool",g:8},{n:833,nom:"Chewtle",g:8},
+  {n:834,nom:"Drednaw",g:8},{n:835,nom:"Yamper",g:8},{n:836,nom:"Boltund",g:8},
+  {n:837,nom:"Rolycoly",g:8},{n:838,nom:"Carkol",g:8},{n:839,nom:"Coalossal",g:8},
+  {n:840,nom:"Applin",g:8},{n:841,nom:"Flapple",g:8},{n:842,nom:"Appletun",g:8},
+  {n:843,nom:"Silicobra",g:8},{n:844,nom:"Sandaconda",g:8},{n:845,nom:"Cramorant",g:8},
+  {n:846,nom:"Arrokuda",g:8},{n:847,nom:"Barraskewda",g:8},{n:848,nom:"Toxel",g:8},
+  {n:849,nom:"Toxtricity",g:8},{n:850,nom:"Sizzlipede",g:8},{n:851,nom:"Centiskorch",g:8},
+  {n:852,nom:"Clobbopus",g:8},{n:853,nom:"Grapploct",g:8},{n:854,nom:"Sinistea",g:8},
+  {n:855,nom:"Polteageist",g:8},{n:856,nom:"Hatenna",g:8},{n:857,nom:"Hattrem",g:8},
+  {n:858,nom:"Hatterene",g:8},{n:859,nom:"Impidimp",g:8},{n:860,nom:"Morgrem",g:8},
+  {n:861,nom:"Grimmsnarl",g:8},{n:862,nom:"Obstagoon",g:8},{n:863,nom:"Perrserker",g:8},
+  {n:864,nom:"Cursola",g:8},{n:865,nom:"Sirfetch'd",g:8},{n:866,nom:"Mr. Rime",g:8},
+  {n:867,nom:"Runerigus",g:8},{n:868,nom:"Milcery",g:8},{n:869,nom:"Alcremie",g:8},
+  {n:870,nom:"Falinks",g:8},{n:871,nom:"Pincurchin",g:8},{n:872,nom:"Snom",g:8},
+  {n:873,nom:"Frosmoth",g:8},{n:874,nom:"Stonjourner",g:8},{n:875,nom:"Eiscue",g:8},
+  {n:876,nom:"Indeedee",g:8},{n:877,nom:"Morpeko",g:8},{n:878,nom:"Cufant",g:8},
+  {n:879,nom:"Copperajah",g:8},{n:880,nom:"Dracozolt",g:8},{n:881,nom:"Arctozolt",g:8},
+  {n:882,nom:"Dracovish",g:8},{n:883,nom:"Arctovish",g:8},{n:884,nom:"Duraludon",g:8},
+  {n:885,nom:"Dreepy",g:8},{n:886,nom:"Drakloak",g:8},{n:887,nom:"Dragapult",g:8},
+  {n:888,nom:"Zacian",g:8},{n:889,nom:"Zamazenta",g:8},{n:890,nom:"Eternatus",g:8},
+  {n:891,nom:"Kubfu",g:8},{n:892,nom:"Urshifu",g:8},{n:893,nom:"Zarude",g:8},
+  {n:894,nom:"Regieleki",g:8},{n:895,nom:"Regidrago",g:8},{n:896,nom:"Glastrier",g:8},
+  {n:897,nom:"Spectrier",g:8},{n:898,nom:"Calyrex",g:8}
 ];
 
 const ALIASES={
@@ -802,6 +866,10 @@ const ALIASES={
   "ho oh":"Ho-oh","hooh":"Ho-oh",
   "porygon z":"Porygon-Z","porygonz":"Porygon-Z",
   "porygon 2":"Porygon2","flabebe":"Flabébé","flabebe":"Flabébé",
+  "type null":"Type: Null","typenull":"Type: Null","codigo cero":"Type: Null",
+  "jangmo o":"Jangmo-o","jangmoo":"Jangmo-o","hakamo o":"Hakamo-o","hakamoo":"Hakamo-o","kommo o":"Kommo-o","kommoo":"Kommo-o",
+  "tapukoko":"Tapu Koko","tapulele":"Tapu Lele","tapubulu":"Tapu Bulu","tapufini":"Tapu Fini",
+  "sirfetchd":"Sirfetch'd","sirfetch’d":"Sirfetch'd","mr rime":"Mr. Rime","mrrime":"Mr. Rime",
 };
 
 function norm(s){
